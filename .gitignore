@@ -1,2 +1,7 @@
 00Info/
-SO-Lab01-Integrador/
+entrada/*
+salida/*
+alertas/*
+!entrada/.gitkeep
+!salida/.gitkeep
+!alertas/.gitkeep

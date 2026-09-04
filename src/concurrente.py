@@ -119,7 +119,7 @@ def procesar_archivo():
             nombre_salida = f"informe_{estacion_arch}_{fecha_arch}.txt"
             
             reporte = (
-                f"INFORME DE ESTACION AMBIENTAL\n"
+                f"INFORME ESTACION AMBIENTAL\n"
                 f"Archivo procesado: {nombre_archivo}\n"
                 f"Estacion: {estacion_arch}\n"
                 f"Fecha del archivo: {fecha_arch}\n"
@@ -183,7 +183,7 @@ def main():
         estacion_max = "Ninguna"
 
     resumen = (
-        "RESUMEN CONSOLIDADO DE MONITOREO AMBIENTAL\n"
+        "RESUMEN DE MONITOREO AMBIENTAL\n"
         "Version ejecutada: concurrente\n"
         f"Archivos procesados: {len(archivos)}\n"
         f"Lineas leidas: {global_lineas_totales}\n"

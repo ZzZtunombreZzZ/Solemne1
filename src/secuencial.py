@@ -4,12 +4,11 @@ import json
 import time
 from datetime import datetime
 
-# Configuración de directorios de acuerdo a la estructura del proyecto
 DIR_ENTRADA = "entrada"
 DIR_SALIDA = "salida"
 DIR_ALERTAS = "alertas"
 
-# Umbrales para alertas ambientales
+# tolerancias
 UMBRALES = {
     "temperatura": 35.0,
     "humedad": 20.0,
@@ -26,13 +25,13 @@ def validar_fecha(fecha_str):
         return False
 
 def procesar_archivos_secuencial():
-    # Crear directorios si no existen para evitar errores
+    # crea los directorios si no existe, evita errores.
     os.makedirs(DIR_SALIDA, exist_ok=True)
     os.makedirs(DIR_ALERTAS, exist_ok=True)
 
     archivos = glob.glob(os.path.join(DIR_ENTRADA, "*.jsonl"))
     
-    # Variables globales para el resumen consolidado
+    # variables
     global_archivos_proc = 0
     global_lineas = 0
     global_validas = 0
@@ -43,7 +42,7 @@ def procesar_archivos_secuencial():
     global_alertas_totales = 0
     alertas_por_estacion = {}
     
-    # Iniciar medición de tiempo
+    # iniciar la medicion de tiempo
     inicio_tiempo = time.time()
     
     log_alertas_path = os.path.join(DIR_ALERTAS, "alertas_detectadas.log")
@@ -52,7 +51,7 @@ def procesar_archivos_secuencial():
         for ruta_archivo in archivos:
             nombre_archivo = os.path.basename(ruta_archivo)
             
-            # Extraer estación y fecha del nombre (estacion_CODIGO_AAAAMMDD.jsonl)
+            # copiar estación y fecha del nombre
             partes = nombre_archivo.replace(".jsonl", "").split("_")
             if len(partes) != 3:
                 continue 
@@ -60,7 +59,7 @@ def procesar_archivos_secuencial():
             estacion_codigo = partes[1]
             fecha_archivo = partes[2]
             
-            # Contadores locales para el reporte individual
+            #contadores para el reporte
             loc_lineas = 0
             loc_validas = 0
             loc_invalidas = 0
@@ -80,12 +79,12 @@ def procesar_archivos_secuencial():
                     try:
                         data = json.loads(linea.strip())
                         
-                        # Validación de estructura y atributos obligatorios
+                        # validacion de estructura
                         campos_requeridos = ["timestamp", "estacion", "temperatura", "humedad", "pm25", "ruido_db"]
                         if not all(k in data for k in campos_requeridos):
                             raise ValueError("Atributo ausente")
                             
-                        # Consistencia del código de estación y reglas de validación
+                        # consistencia y validacion
                         if data["estacion"] != estacion_codigo:
                             raise ValueError("Estación inconsistente")
                         if not validar_fecha(data["timestamp"]):
@@ -98,8 +97,7 @@ def procesar_archivos_secuencial():
                             raise ValueError("PM2.5 inválido")
                         if not (0.0 <= data["ruido_db"] <= 140.0):
                             raise ValueError("Ruido fuera de rango")
-                            
-                        # Medición válida, se procesa
+                    
                         loc_validas += 1
                         loc_sum_temp += data["temperatura"]
                         loc_sum_hum += data["humedad"]
@@ -127,7 +125,7 @@ def procesar_archivos_secuencial():
                                 f_log.write(f"{nombre_archivo};{estacion_codigo};{data['timestamp']};{ind};{val};{umbral}\n")
                                 
                     except (json.JSONDecodeError, ValueError):
-                        # Detecta JSON mal formado o cualquier ValueError levantado arriba
+                        # detecta archivos JSON mal formados
                         loc_invalidas += 1
                         
             # crear informe individual en salida
@@ -162,7 +160,7 @@ def procesar_archivos_secuencial():
             global_alertas_totales += loc_alertas
             alertas_por_estacion[estacion_codigo] += loc_alertas
 
-    # Fin de la medición de tiempo y escritura del resumen
+    # termino medición de tiempo y escritura del resumen
     tiempo_total = time.time() - inicio_tiempo
     
     estacion_max_alertas = max(alertas_por_estacion, key=alertas_por_estacion.get) if alertas_por_estacion else "N/A"

@@ -62,7 +62,7 @@ for estacion in estaciones:
         registros.append(registro)
 
     # Guardar los registros en un archivo JSONL
-    nombre_archivo = f"{estacion}_{fecha_inicio.strftime('%Y%m%d')}.jsonl"
+    nombre_archivo = f"estacion_{estacion}_{fecha_inicio.strftime('%Y%m%d')}.jsonl"
     with open(entrada / nombre_archivo, 'w') as f:
         for registro in registros:
             f.write(json.dumps(registro) + "\n")
