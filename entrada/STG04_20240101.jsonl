@@ -1,0 +1,15 @@
+{"timestamp": "2024-04-09T19:35:01", "estacion": "STG04", "temperatura": 7.37, "humedad": 7.14, "pm25": 149.52, "ruido_db": 113.37}
+{"timestamp": "2024-09-14T11:51:57", "estacion": "STG04", "temperatura": 35.49, "humedad": 30.77, "pm25": 76.14, "ruido_db": 61.31}
+{"timestamp": "2024-02-18T22:33:21", "estacion": "STG04", "temperatura": 25.04, "humedad": 39.85, "pm25": 77.53, "ruido_db": 102.41}
+{"timestamp": "2024-07-10T09:42:29", "estacion": "STG04", "temperatura": -7.09, "humedad": 69.9, "pm25": 446.11, "ruido_db": 11.21}
+{"timestamp": "2024-07-19T14:48:01", "estacion": "STG04", "temperatura": -1.86, "humedad": 44.25, "pm25": 122.1, "ruido_db": 132.03}
+{"timestamp": "2024-10-24T22:38:06", "estacion": "STG04", "temperatura": -7.49, "humedad": 23.39, "pm25": 119.72, "ruido_db": 113.3}
+{"timestamp": "2024-01-22T13:06:37", "estacion": "STG04", "temperatura": 35.57, "humedad": 75.59, "pm25": 301.83, "ruido_db": 88.68}
+{"timestamp": "2024-09-29T00:27:31", "estacion": "STG04", "temperatura": 55.85, "humedad": 75.99, "pm25": 232.47, "ruido_db": 131.23}
+{"timestamp": "2024-08-22T11:17:41", "estacion": "STG04", "temperatura": 22.15, "humedad": 85.35, "pm25": 133.14, "ruido_db": 137.86}
+{"timestamp": "2024-04-27T07:29:47", "estacion": "STG04", "temperatura": -15.62, "humedad": 41.39, "pm25": 88.01, "ruido_db": 46.73}
+{"timestamp": "2024-02-04T05:06:30", "estacion": "STG04", "temperatura": 47.78, "humedad": 2.17, "pm25": 210.67, "ruido_db": 68.3}
+{"timestamp": "2024-09-15T17:07:08", "estacion": "STG04", "temperatura": 41.04, "humedad": 69.79, "pm25": 143.42, "ruido_db": 123.08}
+{"timestamp": "2024-01-07T10:34:39", "estacion": "STG04", "temperatura": 33.45, "humedad": 41.74, "pm25": 233.97, "ruido_db": 104.63}
+{"timestamp": "2024-01-25T06:11:16", "estacion": "STG04", "temperatura": 6.33, "humedad": 80.97, "pm25": 345.89, "ruido_db": 2.77}
+{"timestamp": "2024-12-06T06:07:38", "estacion": "STG04", "temperatura": 32.48, "humedad": 46.72, "pm25": 354.91, "ruido_db": 4.89}
