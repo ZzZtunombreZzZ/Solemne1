@@ -27,7 +27,6 @@ py src/concurrente.py
 
 # Estructura de archivos
 ```
-├───00Info
 ├───alertas
 ├───entrada
 ├───salida
@@ -35,17 +34,17 @@ py src/concurrente.py
 └───src
 ```
 # Comparacion 
-
+ 
 | Caracteristica | Secuencial | Concurrente |
 |----------------|------------|-------------|
-| Archivos procesados | Na | Na |
-| MedicioNaes válidas | Na | Na |
-| Mediciones inválidas | Na | Na |
-| Alertas detectadas | Na | Na |
-| PM2.5 máximo global | Na | Na |
-| Ruido máximo global | Na | Na |
-| Tiempo de ejecución | Na | Na |
-| Cantidad de trabajadores | 1 | 4 |
+| Archivos procesados | 16 | 16 |
+| Mediciones validas | 240 | 240 |
+| Mediciones invalidas | 0 | 0 |
+| Alertas detectadas | 458 | 236 |
+| PM2.5 maximo global | 497.26 ug/m3 | 497.26 ug/m3 |
+| Ruido maximo global | 138.23 dB | 138.23 dB |
+| Tiempo de ejecucion | 0.018 s | 0.013 s |
+| Cantidad de trabajadores | 1 | 3 |
 
 # formato JSONL 
 
