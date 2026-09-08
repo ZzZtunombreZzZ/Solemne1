@@ -86,22 +86,22 @@ def procesar_archivo():
                         if pm > l_pm25_max: l_pm25_max = pm
                         if r > l_ruido_max: l_ruido_max = r
 
-                        es_alerta = False
+                        alertas_medicion = 0
                         if t >= 35.0:
                             alertas_buffer.append(f"{nombre_archivo};{est};{ts};Temperatura;{t};35.0\n")
-                            es_alerta = True
+                            alertas_medicion += 1
                         if h <= 20.0:
                             alertas_buffer.append(f"{nombre_archivo};{est};{ts};Humedad;{h};20.0\n")
-                            es_alerta = True
+                            alertas_medicion += 1
                         if pm >= 35.0:
                             alertas_buffer.append(f"{nombre_archivo};{est};{ts};PM2.5;{pm};35.0\n")
-                            es_alerta = True
+                            alertas_medicion += 1
                         if r >= 75.0:
                             alertas_buffer.append(f"{nombre_archivo};{est};{ts};Ruido;{r};75.0\n")
-                            es_alerta = True
+                            alertas_medicion += 1
 
-                        if es_alerta:
-                            l_alertas += 1
+                        if alertas_medicion:
+                            l_alertas += alertas_medicion
                             if primera_alerta is None:
                                 primera_alerta = ts
 

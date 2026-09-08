@@ -1,6 +1,7 @@
 import os
 import glob
 import json
+import sys
 import time
 from datetime import datetime
 
@@ -24,12 +25,19 @@ def validar_fecha(fecha_str):
     except ValueError:
         return False
 
-def procesar_archivos_secuencial():
+def procesar_archivos_secuencial(estacion_objetivo=None):
     # crea los directorios si no existe, evita errores.
     os.makedirs(DIR_SALIDA, exist_ok=True)
     os.makedirs(DIR_ALERTAS, exist_ok=True)
 
     archivos = glob.glob(os.path.join(DIR_ENTRADA, "*.jsonl"))
+    
+    # filtro para generar solo el reporte de una estación
+    if estacion_objetivo:
+        archivos = [a for a in archivos if f"_{estacion_objetivo}_" in os.path.basename(a)]
+        if not archivos:
+            print(f"No se encontró un archivo para la estación {estacion_objetivo} en {DIR_ENTRADA}")
+            return
     
     # variables
     global_archivos_proc = 0
@@ -182,4 +190,5 @@ def procesar_archivos_secuencial():
         f_resumen.write("Cantidad de trabajadores: 1\n")
 
 if __name__ == "__main__":
-    procesar_archivos_secuencial()            
+    estacion = sys.argv[1] if len(sys.argv) > 1 else None
+    procesar_archivos_secuencial(estacion)            

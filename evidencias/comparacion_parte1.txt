@@ -1,0 +1,20 @@
+COMPARACION PARTE 1
+
+Las dos versiones se ejecutaron con el mismo conjunto de archivos JSONL.
+Los tiempos pueden variar ligeramente entre ejecuciones.
+
+Metrica                         Secuencial       Concurrente
+Archivos procesados             20               20
+Lineas leidas                   320              320
+Mediciones validas              300              300
+Mediciones invalidas            20               20
+Alertas detectadas              562              562
+PM2.5 maximo global             499.95           499.95
+Ruido maximo global             139.55           139.55
+Cantidad de trabajadores        1                3
+
+La version secuencial procesa cada archivo completamente antes de comenzar
+el siguiente. La version concurrente distribuye los archivos mediante una
+cola compartida y utiliza tres trabajadores. Los acumuladores globales y la
+escritura del archivo de alertas se protegen con mutex para evitar condiciones
+de carrera y mantener resultados consistentes.

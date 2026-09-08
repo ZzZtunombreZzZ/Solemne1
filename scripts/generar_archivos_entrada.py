@@ -1,5 +1,5 @@
 """
-Este script genera 15 archivos de entrada en formato JSON en la carpeta "entrada". 
+Este script genera archivos de entrada en formato JSONL en la carpeta "entrada".
 Cada archivo de entrada debe tener extensión. jsonl
 y representar las mediciones de una única estación durante un período determinado.
 
@@ -30,17 +30,19 @@ entrada.mkdir(parents=True, exist_ok=True)
 
 estaciones = ["STG01", "STG02", "STG03", "STG04", "VAL01", "VAL02", "VAL03", "VAL04",
               "CON01", "CON02", "CON03", "CON04", "PUN01", "PUN02", "PUN03", "PUN04"]
+archivos_a_generar = [(estacion, "20240101") for estacion in estaciones]
+archivos_a_generar.extend((estacion, "20240102") for estacion in estaciones[:4])
+random.seed(20240908)
 
-for estacion in estaciones:
+for archivo_existente in entrada.glob("estacion_*.jsonl"):
+    archivo_existente.unlink()
+
+for estacion, fecha_archivo in archivos_a_generar:
     # Generar 15 registros por archivo
     registros = []
     for i in range(15):
-        # Generar un timestamp aleatorio dentro de un rango de fechas
-        fecha_inicio = datetime.datetime(2024, 1, 1)
-        fecha_fin = datetime.datetime(2024, 12, 31)
-        delta = fecha_fin - fecha_inicio
-        random_seconds = random.randint(0, int(delta.total_seconds()))
-        timestamp = (fecha_inicio + datetime.timedelta(seconds=random_seconds)).strftime("%Y-%m-%dT%H:%M:%S")
+        # Mantener tres horarios distintos en todos los archivos.
+        timestamp = f"2024-01-{i + 1:02d}T{(i % 3) * 8:02d}:00:00"
 
         # Generar valores aleatorios para las mediciones
         temperatura = round(random.uniform(-20.0, 60.0), 2)
@@ -61,8 +63,18 @@ for estacion in estaciones:
         # Agregar el registro a la lista de registros
         registros.append(registro)
 
+    # La última línea de cada archivo permite comprobar el descarte de datos inválidos.
+    registros.append({
+        "timestamp": f"2024-01-31T00:00:00",
+        "estacion": estacion,
+        "temperatura": 25.0,
+        "humedad": 50.0,
+        "pm25": -1.0,
+        "ruido_db": 40.0
+    })
+
     # Guardar los registros en un archivo JSONL
-    nombre_archivo = f"estacion_{estacion}_{fecha_inicio.strftime('%Y%m%d')}.jsonl"
-    with open(entrada / nombre_archivo, 'w') as f:
+    nombre_archivo = f"estacion_{estacion}_{fecha_archivo}.jsonl"
+    with open(entrada / nombre_archivo, 'w', encoding="utf-8") as f:
         for registro in registros:
             f.write(json.dumps(registro) + "\n")

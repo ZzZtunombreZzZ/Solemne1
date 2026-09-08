@@ -5,3 +5,4 @@ alertas/*
 !entrada/.gitkeep
 !salida/.gitkeep
 !alertas/.gitkeep
+__pycache__
