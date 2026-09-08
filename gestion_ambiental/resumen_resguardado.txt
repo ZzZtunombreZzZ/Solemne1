@@ -1,0 +1,13 @@
+RESUMEN DE MONITOREO AMBIENTAL
+Version ejecutada: concurrente
+Archivos procesados: 16
+Lineas leidas: 240
+Mediciones validas: 240
+Mediciones invalidas: 0
+Temperatura promedio global: 16.42 °C
+PM2.5 maximo global: 499.42 ug/m3
+Ruido maximo global: 139.66 dB
+Alertas totales: 231
+Estacion con mayor cantidad de alertas: STG03
+Tiempo total de ejecucion: 0.017 segundos
+Cantidad de trabajadores: 3

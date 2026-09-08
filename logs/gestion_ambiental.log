@@ -1,0 +1,36 @@
+[2026-09-08 01:22:39] --- INICIO DE GESTIÓN DE INCIDENCIAS ---
+[2026-09-08 01:22:39] Resumen copiado correctamente a gestion_ambiental/resumen_resguardado.txt
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_CON02_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_CON02_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_VAL01_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_VAL01_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_CON04_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_CON04_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_PUN03_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_PUN03_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_STG01_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_STG01_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_STG02_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_STG02_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_PUN04_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_PUN04_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_VAL02_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_VAL02_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_PUN01_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_PUN01_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_PUN02_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_PUN02_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_CON01_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_CON01_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_VAL04_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_VAL04_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_STG03_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_STG03_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_STG04_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_STG04_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_CON03_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_CON03_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] ADVERTENCIA: No se encontró etiqueta de alertas en informe_VAL03_20240101.txt. Se asume 0.
+[2026-09-08 01:22:39] Informe movido: informe_VAL03_20240101.txt -> sin_alertas (0 alertas)
+[2026-09-08 01:22:39] Inventario generado exitosamente
+[2026-09-08 01:22:39] --- FIN DE GESTIÓN DE INCIDENCIAS ---
