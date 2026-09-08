@@ -11,7 +11,6 @@ Al menos una línea inválida, ya sea por JSONl mal formado, atributo ausente, e
 
 import json
 from pathlib import Path
-import datetime
 import random
 
 entrada = Path("entrada")
