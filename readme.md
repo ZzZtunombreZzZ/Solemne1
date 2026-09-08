@@ -7,9 +7,11 @@ donde existen 2 tipos de procesamientos
 - Concurrente: Procesa los archivos de mediciones meteorológicas de manera concurrente, es decir, varios archivos al mismo tiempo.
 
 # Requisitos
-Python: 3.14
+Python: 3.13 o superior (probado con 3.13 y 3.14).
 
 Los programas usan exclusivamente la librería estándar de Python, no requieren dependencias externas ni compilación.
+
+> En Linux/macOS usar `python3`; en Windows puede usarse `py`.
 
 # Ejecución
 
@@ -17,28 +19,28 @@ Ejecutar siempre desde la raíz del proyecto.
 
 ## Generar datos de entrada
 ```bash
-py scripts/generar_archivos_entrada.py
+python3 scripts/generar_archivos_entrada.py
 ```
 
 ## Secuencial
 para ejecutar el programa secuencial, se debe ejecutar el siguiente comando en la terminal:
 
 ```bash
-py src/secuencial.py
+python3 src/secuencial.py
 ```
 
 ## Concurrente
 para ejecutar el programa concurrente, se debe ejecutar el siguiente comando en la terminal:
 
 ```bash
-py src/concurrente.py
+python3 src/concurrente.py
 ```
 
 ## Gestor de incidencias
 Clasifica los informes generados y organiza las alertas por indicador:
 
 ```bash
-py src/gestor_incidencias.py
+python3 src/gestor_incidencias.py
 ```
 
 # Estructura de carpetas

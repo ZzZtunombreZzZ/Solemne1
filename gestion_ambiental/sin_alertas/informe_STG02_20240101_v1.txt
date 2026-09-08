@@ -1,0 +1,13 @@
+INFORME ESTACION AMBIENTAL
+Archivo procesado: estacion_STG02_20240101.jsonl
+Estacion: STG02
+Fecha del archivo: 20240101
+Lineas leidas: 16
+Mediciones validas: 15
+Mediciones invalidas: 1
+Temperatura promedio: 17.81 °C
+Humedad promedio: 40.28 %
+PM2.5 maximo: 497.15 ug/m3
+Ruido maximo: 131.34 dB
+Alertas detectadas: 23
+Primera alerta: 2024-01-01T00:00:00
