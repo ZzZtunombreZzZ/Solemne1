@@ -8,46 +8,16 @@ Este documento contiene **exclusivamente las acciones concretas y pendientes** p
 
 ```
 DOCUMENTACIÓN
-├── 1. Hito Presencial (hito_parte2hp_equipo07.pdf)
-│   ├── [x] Corregir nombre de integrante: corregido a "José Palma" en hito_parte2hp_equipo07.pdf
-│   ├── [ ] Reducir a 1 o 2 páginas (actualmente tiene 5)
-│   ├── [ ] Pegar redacción en "Flujo planificado" (estaba vacío)
-│   ├── [ ] Agregar sección "Cinco evidencias para el informe final" (faltaba)
-│   └── [ ] Agregar riesgo de sobrescritura del gestor (_v1, _v2)
-│
-└── 2. Informe Final Asincrónico (8 a 12 páginas en PDF)
-    ├── [ ] Tomar 4 capturas pendientes en la VM Debian (ps, free/df, stat, error)
-    ├── [ ] Integrar capturas existentes de "evidencias/Parte 2 solemne..."
-    ├── [ ] Redactar explicación técnica: Mover vs Copiar y campos del sistema
-    └── [ ] Exportar PDF final de 8 a 12 páginas
+├── 1. Informe Final Asincrónico (8 a 12 páginas en PDF)
+│   ├── [ ] Tomar 4 capturas pendientes en la VM Debian (ps, free/df, stat, error)
+│   ├── [ ] Integrar capturas existentes de "evidencias/Parte 2 solemne..."
+│   ├── [ ] Redactar explicación técnica: Mover vs Copiar y campos del sistema
+│   └── [ ] Exportar PDF final de 8 a 12 páginas
 ```
 
 ---
 
-## BLOQUE 1: Acciones para el Hito Presencial (`docs/hito_parte2hp_equipo07.pdf`)
-
-> **Nota de Rúbrica:** El documento debe tener estrictamente **entre 1 y 2 páginas**.
-
-### ✔️ Acción 1.1: Corregir nombre del integrante en la portada (COMPLETADO)
-- **Corrección aplicada en `hito_parte2hp_equipo07.pdf`:** Se corrigió el nombre bajo *Integrantes* a:
-  ```
-  Integrantes:
-  Benjamín Zamora
-  José Palma
-  Franco Maripil
-  Nicolas Portilla
-  Thomas Márquez
-  ```
-
----
-
-###  Acción 1.2: Compactar el formato a máximo 2 páginas
-- **Problema actual:** El PDF tiene 5 páginas debido a espaciados excesivos y saltos de página en Google Docs.
-- **Solución:** Reducir márgenes, tamaño de fuente (10-11 pt) y espaciado de tablas para que todo quepa en **2 páginas**.
-
----
-
-###  Acción 1.3: Pegar el contenido en la sección "Flujo Planificado"
+###  Acción 1: Pegar el contenido en la sección "Flujo Planificado"
 *Copiar y pegar este texto directamente debajo del título que quedó en blanco:*
 
 ```markdown
@@ -63,7 +33,7 @@ DOCUMENTACIÓN
 
 ---
 
-###  Acción 1.4: Agregar la sección "Cinco evidencias para el informe final"
+###  Acción 1.2: Agregar la sección "Cinco evidencias para el informe final"
 *Copiar y pegar esta sección requerida por la pauta (actualmente omitida en el hito):*
 
 ```markdown
@@ -77,7 +47,7 @@ Cinco evidencias planificadas para el informe final:
 
 ---
 
-###  Acción 1.5: Agregar riesgo del gestor de incidencias a la tabla de riesgos
+###  Acción 1.3: Agregar riesgo del gestor de incidencias a la tabla de riesgos
 *Añadir esta fila a la tabla de riesgos:*
 
 | Riesgo Identificado | Medida de Mitigación |
@@ -87,13 +57,6 @@ Cinco evidencias planificadas para el informe final:
 ---
 
 ## BLOQUE 2: Acciones para el Informe Final Asincrónico (8 a 12 Páginas)
-
-Franco ya recopiló en `evidencias/Parte 2 solemne Sistemas Operativos.pdf` las capturas de:
-- Descarga de ISO y VirtualBox.
-- Asignación de recursos (4 GB RAM, 4 CPUs, 25 GB).
-- Instalación de Debian y pantalla de login.
-- `apt update`, `apt upgrade` y versión de Python.
-- Estructura de carpetas con `mkdir -p` y `ls -R`.
 
 ###  Acción 2.1: Tomar las 4 capturas faltantes en la VM Debian (Pauta punto e - 8 pts)
 
