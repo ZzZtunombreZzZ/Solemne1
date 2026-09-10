@@ -24,9 +24,11 @@ anomalias, tamanos, etc.) se extraen en tiempo de generacion de:
 Si un dato no aparece en la evidencia, el script se detiene con un error en vez
 de inventarlo.
 
-Dependencias: python-docx, reportlab, Pillow (y pymupdf solo la primera vez,
-para extraer de un PDF las capturas de instalacion; despues quedan en cache
-dentro de evidencias/fotos/instalacion/).
+Las unicas figuras del informe son archivos PNG del repositorio: la instalacion
+real sobre Hyper-V (evidencias/fotos/instalacion-hyperv/) y la consola de la
+maquina definitiva (evidencias/fotos/debian-0*.png).
+
+Dependencias: python-docx, reportlab, Pillow.
 
 Uso:
     python scripts/generar_informe.py
@@ -46,11 +48,9 @@ RAIZ = Path(__file__).resolve().parent.parent
 EV = RAIZ / "evidencias" / "debian"
 EV_HYPERV = RAIZ / "evidencias" / "hyperv"
 FOTOS = RAIZ / "evidencias" / "fotos"
-CACHE_INSTALACION = FOTOS / "instalacion"
 FOTOS_HYPERV = FOTOS / "instalacion-hyperv"
 CACHE_RECORTES = FOTOS / "recortes"
 DOCS = RAIZ / "docs"
-PDF_CAPTURAS = RAIZ / "evidencias" / "Parte 2 solemne Sistemas Operativos.pdf"
 
 SALIDA_DOCX = DOCS / "Informe_Final_Parte2_Equipo07.docx"
 SALIDA_PDF = DOCS / "Informe_Final_Parte2_Equipo07.pdf"
@@ -66,19 +66,19 @@ SALIDA_PDF = DOCS / "Informe_Final_Parte2_Equipo07.pdf"
 # documento del hito (docs/hito_parte2hp_equipo07.pdf). Se dedujo del nombre de
 # la carpeta del repositorio ("...uss..."). Si el ramo no es de la Universidad
 # San Sebastian, corregir aqui: es el UNICO lugar donde aparece.
-UNIVERSIDAD = "Universidad San Sebastian"
+UNIVERSIDAD = "Universidad San Sebastián"
 ASIGNATURA = "Sistemas Operativos"
-EVALUACION = "Solemne 01 Practico - Parte 2 - Forma B"
-SUBTITULO = "Informe final asincronico"
+EVALUACION = "Solemne 01 Práctico - Parte 2 - Forma B"
+SUBTITULO = "Informe final asincrónico"
 EQUIPO = "Equipo 07"
-SECCION = "Seccion NRC 18897"
+SECCION = "Sección NRC 18897"
 LENGUAJE = "Lenguaje utilizado en la Parte 1: Python"
 INTEGRANTES = [
-    "Benjamin Zamora",
-    "Jose Palma",
+    "Benjamín Zamora",
+    "José Palma",
     "Franco Maripil",
-    "Nicolas Portilla",
-    "Thomas Marquez",
+    "Nicolás Portilla",
+    "Thomas Márquez",
 ]
 FECHA = "09 de septiembre de 2026"
 
@@ -121,6 +121,30 @@ FOTOS_INSTALACION_HYPERV = [
     "04-instalacion-final.png",
     "05-primer-inicio.png",
 ]
+
+# %CPU maximo que muestra EN PANTALLA la captura de la observacion en vivo
+# (evidencias/fotos/debian-02-observacion-procesos.png). Es el unico dato del
+# informe que se lee de una imagen y no de un archivo de texto, porque esa
+# corrida no dejo transcripcion: la captura ES su evidencia. Se declara aqui,
+# a la vista, para que quien revise la figura pueda contrastarlo de un vistazo
+# y corregirlo en un solo lugar si la captura cambiara.
+FIG_OBSERVACION_PCPU = "107"
+
+# Marcador con el que el control de versiones conserva una carpeta vacia. No lo
+# produjo el gestor, y por eso el arbol entregado trae un archivo mas que la
+# evidencia congelada bajo gestion_ambiental/. verificar_coherencia() exige que
+# la diferencia entre ambos sea EXACTAMENTE este archivo y ningun otro.
+MARCADOR_CARPETA_VACIA = "gestion_ambiental/sin_alertas/.gitkeep"
+
+# Significado de la letra de estado que ps imprime en la columna STAT. La
+# explicacion del informe NO se escribe a mano: se arma con la letra que traiga
+# la muestra transcrita, de modo que no pueda describir un estado distinto del
+# que la propia transcripcion muestra.
+ESTADOS_PS = {
+    "R": "ejecutándose en CPU",
+    "S": "durmiendo en espera interrumpible (entrada/salida o un mutex)",
+    "D": "en espera ininterrumpible por entrada/salida",
+}
 
 # ---------------------------------------------------------------------------
 # Numeracion de secciones.
@@ -285,6 +309,27 @@ REEMPLAZOS = {
 }
 
 
+# Tres lineas de los archivos de evidencia NO son salida de ningun comando:
+# son frases que el equipo escribio en la bitacora de la sesion y que el
+# informe intercala en sus propios parrafos. La consola de la maquina virtual
+# se uso sin acentos, de modo que llegan sin ellos y quedarian como tres
+# palabras sin tilde en medio de prosa acentuada. Se les restituye la tilde
+# -solo la ortografia, ni una palabra ni una cifra cambia- y la lista queda
+# aqui, a la vista, para que se pueda auditar exactamente que se toco. Las
+# transcripciones de salida de comandos NO pasan por aqui: van literales.
+TILDES_DE_EVIDENCIA = {
+    "estandar": "estándar",
+    "modulos": "módulos",
+    "arbol": "árbol",
+}
+
+
+def acentuar_prosa_de_evidencia(texto):
+    def uno(m):
+        return TILDES_DE_EVIDENCIA[m.group(0).lower()]
+    return re.sub(r"\b(?:%s)\b" % "|".join(TILDES_DE_EVIDENCIA), uno, texto)
+
+
 def sin_acentos(texto):
     """Quita tildes y dieresis, conservando el resto del texto."""
     normal = unicodedata.normalize("NFD", texto)
@@ -312,47 +357,11 @@ def limpiar(texto):
 # Preparacion de imagenes
 # ---------------------------------------------------------------------------
 
-def extraer_capturas_instalacion():
-    """Extrae del PDF de capturas del equipo las imagenes de instalacion.
-
-    Se cachean en evidencias/fotos/instalacion/ para que el informe pueda
-    regenerarse aunque pymupdf no este disponible.
-    """
-    deseadas = {
-        "01-descarga-iso.png": (1, 17),
-        "02-recursos-vm.png": (2, 21),
-        "03-instalacion-en-curso.png": (2, 22),
-        "04-primer-inicio.png": (2, 23),
-        "05-preparacion-entorno.png": (4, 28),
-    }
-    CACHE_INSTALACION.mkdir(parents=True, exist_ok=True)
-    faltantes = {k: v for k, v in deseadas.items()
-                 if not (CACHE_INSTALACION / k).exists()}
-    if faltantes:
-        try:
-            import pymupdf
-        except ImportError:
-            try:
-                import fitz as pymupdf  # nombre antiguo
-            except ImportError:
-                morir("faltan capturas en %s y no hay pymupdf para extraerlas "
-                      "de %s" % (CACHE_INSTALACION, PDF_CAPTURAS))
-        doc = pymupdf.open(str(PDF_CAPTURAS))
-        for nombre, (pagina, xref) in faltantes.items():
-            px = pymupdf.Pixmap(doc, xref)
-            if px.n > 4:
-                px = pymupdf.Pixmap(pymupdf.csRGB, px)
-            px.save(str(CACHE_INSTALACION / nombre))
-        doc.close()
-    return {k: CACHE_INSTALACION / k for k in deseadas}
-
-
 def capturas_instalacion_real():
     """Capturas de la instalacion definitiva, hecha sobre Hyper-V.
 
-    No se extraen de ningun PDF: son archivos del repositorio. Si falta alguna,
-    el generador se detiene, porque son la evidencia principal de la seccion de
-    instalacion.
+    Son la UNICA evidencia grafica de instalacion del entregable, y archivos
+    del repositorio. Si falta alguna, el generador se detiene.
     """
     salida = {}
     for nombre in FOTOS_INSTALACION_HYPERV:
@@ -577,8 +586,11 @@ def leer_hyperv():
     if h["iso_sha_calculado"] != h["iso_sha_publicado"] or h["iso_coincide"] != "SI":
         morir("la evidencia de Hyper-V declara que el SHA256 del ISO no coincide")
 
+    # Frase del informe, no transcripcion: la escribe este generador a partir
+    # de la generacion leida arriba, y por eso va acentuada como el resto de la
+    # prosa. Lo que se transcribe literal son las salidas de los cmdlets.
     h["hipervisor_implementado"] = (
-        "Microsoft Hyper-V (maquina de Generacion " + h["generacion"]
+        "Microsoft Hyper-V (máquina de Generación " + h["generacion"]
         + ", arranque BIOS)")
     return h
 
@@ -606,11 +618,12 @@ def recolectar_datos():
                                  re.M)
     d["apt_list"] = bloque_tras(t01, "$ apt list --installed", 4,
                                 "paquetes instalados")
-    d["sin_dependencias"] = buscar(
+    d["sin_dependencias"] = acentuar_prosa_de_evidencia(buscar(
         t01, r"^(El proyecto usa exclusivamente la biblioteca estandar de Python)",
-        "declaracion de dependencias", re.M)
-    d["compilacion"] = buscar(t01, r"^(Los \w+ modulos compilan sin errores\.)$",
-                              "comprobacion de compilacion", re.M)
+        "declaracion de dependencias", re.M))
+    d["compilacion"] = acentuar_prosa_de_evidencia(
+        buscar(t01, r"^(Los \w+ modulos compilan sin errores\.)$",
+               "comprobacion de compilacion", re.M))
 
     # --- 02 entorno ---------------------------------------------------------
     d["pretty_name"] = buscar(t02, r'PRETTY_NAME="([^"]+)"', "distribucion")
@@ -732,12 +745,21 @@ def recolectar_datos():
                                "lineas de la carga amplificada")
     d["muestras_ps"] = buscar(t04, r"Muestras de ps tomadas[^:]*: (\d+)",
                               "muestras de ps")
-    d["ps_cmd"] = buscar(t04, r"^(\$ ps -o [^\n]+)$", "comando ps", re.M)
-    d["ps_cabecera"] = buscar(t04, r"^(\s*PID\s+PPID STAT.*)$", "cabecera de ps", re.M)
+    # La fila que el informe imprime bajo el comando de identificacion tiene
+    # que salir del bloque de identificacion, y no de cualquier parte de la
+    # evidencia: buscarla por patron en todo el archivo hacia que se colara la
+    # primera muestra del bloque "Evolucion durante la ejecucion", cuyos
+    # valores son de otro instante y describen otro estado del proceso.
+    bloque_ident = bloque_entre(
+        t04, "--- Identificacion y recursos del proceso concurrente ---",
+        "Interpretacion de cada campo", "identificacion del proceso")
+    d["ps_cmd"] = buscar(bloque_ident, r"^(\$ ps -o [^\n]+)$", "comando ps", re.M)
+    d["ps_cabecera"] = buscar(bloque_ident, r"^(\s*PID\s+PPID STAT.*)$",
+                              "cabecera de ps", re.M)
     linea_ps = buscar(
-        t04,
-        r"^(\s*\d+\s+\d+ Sl\s+[\d.]+\s+[\d.]+\s+\d+\s+\d+\s+\d+\s+\S+\s+python3.*)$",
-        "muestra de ps", re.M)
+        bloque_ident,
+        r"^(\s*\d+\s+\d+\s+\S+\s+[\d.]+\s+[\d.]+\s+\d+\s+\d+\s+\d+\s+\S+\s+python3.*)$",
+        "muestra de ps de la identificacion", re.M)
     d["ps_linea"] = linea_ps
     campos = linea_ps.split()
     d["pid"] = campos[0]
@@ -748,9 +770,33 @@ def recolectar_datos():
     d["rss"] = campos[5]
     d["vsz"] = campos[6]
     d["nlwp"] = campos[7]
+    # La explicacion del campo STAT se arma con la letra que trae ESTA muestra,
+    # no con una escrita a mano: asi no puede describir un estado que la fila
+    # transcrita no muestra.
+    letra = d["stat"][0]
+    if letra not in ESTADOS_PS:
+        morir("la muestra de ps trae el estado %r y el informe no sabe explicarlo"
+              % d["stat"])
+    if not d["stat"].endswith("l"):
+        morir("la muestra de ps trae el estado %r, sin la marca de multihilo"
+              % d["stat"])
+    otra = "S" if letra == "R" else "R"
+    d["stat_explicacion"] = (
+        d["stat"] + ": en el instante de la muestra el proceso estaba "
+        + ESTADOS_PS[letra] + "; la l final indica que es multihilo. En otras "
+        "muestras aparece " + otra + ", " + ESTADOS_PS[otra] + ".")
+
     d["ps_evolucion"] = bloque_entre(
         t04, "--- Evolucion durante la ejecucion",
         "--- Hilos del proceso", "evolucion de CPU").strip("\n")
+    filas_evo = [ln.split() for ln in d["ps_evolucion"].splitlines() if ln.strip()]
+    if len(filas_evo) < 2:
+        morir("se esperaban al menos dos muestras sucesivas en el bloque de evolucion")
+    d["evo_pcpu_inicial"] = filas_evo[0][3]
+    d["evo_rss_inicial_mb"] = "%.1f" % (int(filas_evo[0][5]) / 1024.0)
+    d["evo_nlwp_inicial"] = filas_evo[0][7]
+    d["evo_pcpu_final"] = filas_evo[-1][3]
+    d["evo_nlwp_final"] = filas_evo[-1][7]
     bloque_hilos = bloque_entre(t04, "--- Hilos del proceso",
                                 "--- Proceso padre", "hilos del proceso").strip("\n")
     d["ps_hilos"] = "\n".join(ln for ln in bloque_hilos.splitlines()
@@ -784,9 +830,9 @@ def recolectar_datos():
     d["pcpu_max"] = max(
         buscar_todos(t04, r"^\s*\d+\s+\d+ \S+\s+([\d.]+)\s", "%CPU", re.M),
         key=lambda x: float(x))
-    d["copias_demo"] = buscar(
+    d["copias_demo"] = acentuar_prosa_de_evidencia(buscar(
         t04, r"^(Ambas(?: partes)? se ejecutan sobre COPIAS del proyecto.+)$",
-        "declaracion de uso de copias", re.M)
+        "declaracion de uso de copias", re.M))
 
     # --- 05 gestor de incidencias ------------------------------------------
     d["find_dirs"] = bloque_entre(t05, "$ find gestion_ambiental logs -type d | sort",
@@ -810,6 +856,9 @@ def recolectar_datos():
         "comprobacion mover vs copiar").strip().strip("#").strip()
     d["bitacora_final"] = bloque_tras(t05, "--- Cierre de la bitacora ---", 20,
                                       "ultimas lineas de la bitacora")
+    d["cierre_inventario"] = buscar(d["bitacora_final"],
+                                    r"^(.*Inventario generado en .+)$",
+                                    "linea de cierre del inventario", re.M)
     d["json_valido"] = buscar(t05, r"^(JSON valido)\.", "validacion del JSON", re.M)
     d["json_claves"] = buscar(t05, r"JSON valido\. Claves: \[(.+)\]",
                               "claves del inventario")
@@ -910,6 +959,17 @@ def recolectar_datos():
         morir("se esperaban 3 corridas de idempotencia en la evidencia 07")
 
     # --- estado real del repositorio ---------------------------------------
+    # Archivos que hay DE VERDAD bajo gestion_ambiental/ en el arbol entregado.
+    # La cifra no se fija a mano ni se copia de la evidencia: el gestor produjo
+    # los suyos y el control de versiones agrego ademas el marcador de la
+    # carpeta vacia, de modo que el arbol trae uno mas. verificar_coherencia()
+    # exige que esa sea toda la diferencia.
+    d["archivos_gestion"] = sorted(
+        ruta.relative_to(RAIZ).as_posix()
+        for ruta in (RAIZ / "gestion_ambiental").rglob("*") if ruta.is_file())
+    d["n_archivos_gestion"] = str(len(d["archivos_gestion"]))
+    d["marcador_vacio"] = MARCADOR_CARPETA_VACIA.split("/", 1)[1]
+
     d["n_sin"] = contar_archivos(RAIZ / "gestion_ambiental" / "sin_alertas")
     d["n_con"] = contar_archivos(RAIZ / "gestion_ambiental" / "con_alertas")
     d["n_crit"] = contar_archivos(RAIZ / "gestion_ambiental" / "criticas")
@@ -976,6 +1036,20 @@ def verificar_coherencia(d):
     cmp("archivos .jsonl en entrada/", d["entradas"], d["ev_entradas"])
     cmp("archivos respaldados en evidencias/salida_parte1/",
         d["respaldo_parte1_real"], d["respaldo_parte1"])
+
+    # Arbol entregado contra el listado congelado de la evidencia. Lo unico que
+    # el arbol puede traer de mas es el marcador de la carpeta vacia; cualquier
+    # otro archivo -o cualquier ausencia- significa que el informe describiria
+    # una estructura que no es la que se entrega.
+    faltan_gest = sorted(set(d["find_files"]) - set(d["archivos_gestion"]))
+    sobran_gest = sorted(set(d["archivos_gestion"]) - set(d["find_files"]))
+    if faltan_gest:
+        problemas.append("la evidencia registra bajo gestion_ambiental/ archivos que "
+                         "el arbol entregado no tiene: " + ", ".join(faltan_gest))
+    if sobran_gest != [MARCADOR_CARPETA_VACIA]:
+        problemas.append("bajo gestion_ambiental/ el arbol entregado trae %s de mas y "
+                         "solo se admite %s"
+                         % (sobran_gest or "nada", MARCADOR_CARPETA_VACIA))
 
     # Bitacora: el par (lineas, bytes) tiene que venir de la MISMA corrida.
     cmp("lineas de logs/gestion_ambiental.log", d["n_bitacora"], d["ev_n_bitacora"])
@@ -1244,6 +1318,28 @@ TEXTO_MINIMO_PT = 6.0
 TEXTO_MAXIMO_PT = 8.5
 
 
+def extracto_inventario(inv):
+    """Extracto del inventario que respeta la ESTRUCTURA real del archivo.
+
+    total_informes, informes_por_categoria, anomalias_registradas y
+    errores_de_proceso NO son claves de primer nivel: cuelgan de "resumen".
+    Presentarlas como si lo fueran describia un archivo distinto del entregado
+    y contradecia al propio comando que el informe muestra encima. Aqui se
+    vuelca el objeto completo y solo se eliden los tres subarboles largos, con
+    la misma marca [...] que el resto del informe, de modo que las claves de
+    primer nivel quedan TODAS a la vista.
+    """
+    marca = "__ELISION__"
+    resumido = {}
+    for clave, valor in inv.items():
+        if clave in ("informes", "alertas_por_indicador", "anomalias"):
+            resumido[clave] = marca
+        else:
+            resumido[clave] = valor
+    texto = json.dumps(resumido, indent=2, ensure_ascii=False)
+    return texto.replace('"' + marca + '"', "{ [...] }")
+
+
 def nota(t):
     return {"t": "nota", "x": t}
 
@@ -1264,194 +1360,197 @@ def construir_documento(d, imgs_hv):
     b.append(salto())
 
     # ------------------------------------------- 1. Introduccion y objetivos
-    b.append(h1("intro", "Introduccion y objetivos"))
+    b.append(h1("intro", "Introducción y objetivos"))
     b.append(p(
-        "Este informe documenta el traslado de la solucion de monitoreo ambiental del "
+        "Este informe documenta el traslado de la solución de monitoreo ambiental del "
         "Equipo 07 a un ambiente Debian GNU/Linux, como exige la Parte 2 de la Solemne 01 "
-        "practica (Forma B): instalacion de la maquina virtual, preparacion del entorno, "
-        "ejecucion de las dos versiones de la Parte 1 sobre el mismo conjunto de datos, "
-        "gestor de incidencias y observacion de procesos, memoria y sistema de archivos. "
-        "Todas las cifras se midieron dentro de la maquina virtual en una UNICA corrida y "
+        "práctica (Forma B): instalación de la máquina virtual, preparación del entorno, "
+        "ejecución de las dos versiones de la Parte 1 sobre el mismo conjunto de datos, "
+        "gestor de incidencias y observación de procesos, memoria y sistema de archivos. "
+        "Todas las cifras se midieron dentro de la máquina virtual en una ÚNICA corrida y "
         "quedaron en evidencias/. El documento lo genera scripts/generar_informe.py, que "
-        "lee esos archivos, los compara con el estado real del arbol entregado y se "
+        "lee esos archivos, los compara con el estado real del árbol entregado y se "
         "detiene sin emitir nada si ambas fuentes no coinciden."))
 
     b.append(h2("objetivos", "Objetivo de cada componente"))
     b.append(ul([
         "src/secuencial.py: procesar un archivo JSONL completo antes de pasar al "
-        "siguiente, sin hilos. Define el contrato de validacion y es la referencia contra "
+        "siguiente, sin hilos. Define el contrato de validación y es la referencia contra "
         "la cual se compara el resultado concurrente.",
         "src/concurrente.py: procesar el mismo conjunto repartiendo los archivos entre "
         + d["t_con"]["trabajadores"] + " trabajadores threading.Thread mediante una "
-        "queue.Queue compartida, protegiendo acumuladores globales y bitacora de alertas "
+        "queue.Queue compartida, protegiendo acumuladores globales y bitácora de alertas "
         "con mutex threading.Lock.",
         "src/gestor_incidencias.py: clasificar los informes por cantidad de alertas, "
         "resguardar el resumen, separar alertas por indicador, generar el inventario JSON "
-        "y mantener una bitacora trazable sin detenerse ante entradas defectuosas.",
+        "y mantener una bitácora trazable sin detenerse ante entradas defectuosas.",
     ]))
 
     b.append(h2("flujo", "Flujo del sistema de principio a fin"))
     b.append(ol([
-        "Generacion de datos: scripts/generar_archivos_entrada.py crea "
+        "Generación de datos: scripts/generar_archivos_entrada.py crea "
         + d["archivos_generados"] + " archivos estacion_CODIGO_AAAAMMDD.jsonl en "
         "entrada/ con semilla fija " + d["semilla"] + ", de modo que la entrada es "
-        "identica en cualquier maquina.",
-        "Ingesta y validacion: cada linea JSONL se valida en formato, tipos, rangos y "
-        "timestamp; la que no cumple se descarta como invalida sin detener el proceso.",
-        "Procesamiento: la version secuencial recorre los archivos uno tras otro; la "
+        "idéntica en cualquier máquina.",
+        "Ingesta y validación: cada línea JSONL se valida en formato, tipos, rangos y "
+        "timestamp; la que no cumple se descarta como inválida sin detener el proceso.",
+        "Procesamiento: la versión secuencial recorre los archivos uno tras otro; la "
         "concurrente los encola en una queue.Queue y los reparte entre "
-        + d["t_con"]["trabajadores"] + " hilos que acumulan resultados locales y solo "
-        "actualizan las variables globales dentro de una seccion critica.",
-        "Deteccion de alertas: cada medicion valida se contrasta con los umbrales y la "
+        + d["t_con"]["trabajadores"] + " hilos que acumulan resultados locales y sólo "
+        "actualizan las variables globales dentro de una sección crítica.",
+        "Detección de alertas: cada medición válida se contrasta con los umbrales y la "
         "alerta se escribe en alertas/alertas_detectadas.log con el formato "
         "archivo;estacion;timestamp;indicador;valor;umbral.",
         "Salida: un informe por archivo en salida/informe_*.txt y el consolidado "
         "salida/resumen_ambiental.txt.",
-        "Gestion de incidencias: los informes se MUEVEN a gestion_ambiental/sin_alertas/, "
-        "con_alertas/ o criticas/ segun sus alertas; el resumen se COPIA como "
+        "Gestión de incidencias: los informes se MUEVEN a gestion_ambiental/sin_alertas/, "
+        "con_alertas/ o criticas/ según sus alertas; el resumen se COPIA como "
         "resumen_resguardado.txt; las alertas se separan por indicador; se generan "
         "inventario_ambiental.json y logs/gestion_ambiental.log. Por eso salida/ queda "
-        "solo con el resumen: ver " + ref("leeme") + ".",
+        "sólo con el resumen: ver " + ref("leeme") + ".",
     ]))
 
-    b.append(h2("validacion", "Reglas de validacion y umbrales de alerta"))
+    b.append(h2("validacion", "Reglas de validación y umbrales de alerta"))
     b.append(tabla(
-        ["Campo", "Rango valido", "Indicador", "Condicion de alerta"],
+        ["Campo", "Rango válido", "Indicador", "Condición de alerta"],
         [[RANGOS_VALIDOS[i][0], RANGOS_VALIDOS[i][1],
           UMBRALES[i][0] if i < len(UMBRALES) else "",
           UMBRALES[i][1] if i < len(UMBRALES) else ""]
          for i in range(len(RANGOS_VALIDOS))],
         anchos=[3.0, 5.0, 3.0, 5.5]))
     b.append(p(
-        "Ambas versiones comparten estas constantes, y esa es la razon de fondo por la "
-        "cual sus metricas deben coincidir hasta el ultimo decimal: la concurrencia "
+        "Ambas versiones comparten estas constantes, y ésa es la razón de fondo por la "
+        "cual sus métricas deben coincidir hasta el último decimal: la concurrencia "
         "cambia el orden en que se hace el trabajo, no el criterio con que se decide."))
 
     # ------------------------------------------------- 2. Instalacion Debian
-    b.append(h1("instalacion", "Instalacion de Debian 13 en la maquina virtual"))
+    b.append(h1("instalacion", "Instalación de Debian 13 en la máquina virtual"))
 
-    b.append(h2("iso", "Descarga y verificacion del ISO"))
+    b.append(h2("iso", "Descarga y verificación del ISO"))
     b.append(p(
-        "Se descargo la imagen de instalacion por red " + hv["iso_nombre"] + " ("
-        + hv["iso_tamano"] + ") desde el sitio oficial de Debian y se verifico su "
+        "Se descargó la imagen de instalación por red " + hv["iso_nombre"] + " ("
+        + hv["iso_tamano"] + ") desde el sitio oficial de Debian y se verificó su "
         "integridad comparando su SHA256 con el publicado en SHA256SUMS, lo que garantiza "
-        "que el medio no fue alterado ni quedo truncado. La salida es la del anfitrion y "
-        "esta archivada en evidencias/hyperv/configuracion-vm-hyperv.txt:"))
+        "que el medio no fue alterado ni quedó truncado. La salida es la del anfitrión y "
+        "está archivada en evidencias/hyperv/configuracion-vm-hyperv.txt:"))
     b.append(code("PS> Get-FileHash " + hv["iso_nombre"] + " -Algorithm SHA256",
                   "Hash calculado : " + hv["iso_sha_calculado"]
                   + "\nHash publicado : " + hv["iso_sha_publicado"]
                   + "\n  Fuente: " + hv["iso_fuente"]
                   + "\nCoincide       : " + hv["iso_coincide"]))
 
-    b.append(h2("hipervisor", "Declaracion del cambio de hipervisor respecto del hito"))
+    b.append(h2("hipervisor", "Declaración del cambio de hipervisor respecto del hito"))
     b.append(nota(
-        "Declaracion explicita. En el hito el equipo planifico usar "
-        + HIPERVISOR_PLANIFICADO + " y la implementacion final se hizo sobre "
+        "Declaración explícita. En el hito el equipo planificó usar "
+        + HIPERVISOR_PLANIFICADO + " y la implementación final se hizo sobre "
         + hv["hipervisor_implementado"] + ". Se hace constar porque afecta lo declarado en "
-        "el hito; la pauta admite la situacion, ya que la instalacion \"puede hacerlo en "
+        "el hito; la pauta admite la situación, ya que la instalación \"puede hacerlo en "
         "VirtualBox, VMware u otro hipervisor\". Los recursos comprometidos se respetaron "
         "exactamente, sin rebajar ninguno."))
     b.append(tabla(
-        ["Recurso", "Minimo de la pauta", "Comprometido en el hito",
+        ["Recurso", "Mínimo de la pauta", "Comprometido en el hito",
          "Implementado y verificado"],
         [["Hipervisor", "VirtualBox, VMware u otro", HIPERVISOR_PLANIFICADO,
-          "Microsoft Hyper-V, Generacion " + hv["generacion"]],
+          "Microsoft Hyper-V, Generación " + hv["generacion"]],
          ["RAM", "2 GB", "4 GB",
-          hv["ram_gb"] + " GB fijos (memoria dinamica: " + hv["ram_dinamica"] + "); "
-          + d["memoria"].splitlines()[1].split()[1] + " utiles segun free -h"],
+          hv["ram_gb"] + " GB fijos (memoria dinámica: " + hv["ram_dinamica"] + "); "
+          + d["memoria"].splitlines()[1].split()[1] + " útiles según free -h"],
          ["Procesadores virtuales", "2", "4",
           hv["vcpu"] + " vCPU sobre " + d["modelo_cpu"]],
          ["Disco virtual", "20 GB", "25 GB",
           hv["vhd_gb"] + " GB " + hv["vhd_tipo"] + " (ocupa " + hv["vhd_real_gb"]
-          + " GB reales en el anfitrion)"],
+          + " GB reales en el anfitrión)"],
          ["Red", "NAT", "NAT con conectividad",
           hv["switch"] + " (" + hv["switch_tipo"] + "), IP " + d["ip_eth0"] + " por DHCP"],
          ["Sistema", "Debian 13, 64 bits", "Debian 13, 64 bits",
-          d["pretty_name"] + ", version " + d["version_debian"]]],
+          d["pretty_name"] + ", versión " + d["version_debian"]]],
         anchos=[2.5, 2.9, 2.9, 8.1]))
     b.append(p(
-        "El propio sistema instalado confirma sobre que hipervisor corre, de modo que la "
-        "declaracion es verificable y no depende de la palabra del equipo:"))
+        "El propio sistema instalado confirma sobre qué hipervisor corre, de modo que la "
+        "declaración es verificable y no depende de la palabra del equipo:"))
     b.append(code("$ systemd-detect-virt ; lscpu | grep 'Hypervisor vendor' ; uname -a",
                   d["hipervisor_detectado"]
                   + "\nHypervisor vendor:                       " + d["hipervisor_vendor"]
                   + "\n" + d["kernel"]))
-    # La captura de la creacion de la VM en VirtualBox NO se incluye como
-    # figura. No corresponde a la maquina entregada, y su propio contenido lo
-    # delata: declara otro usuario y otro nombre de host que los de la maquina
-    # definitiva. Ilustrar la configuracion de recursos con una pantalla de una
-    # maquina distinta seria peor que no ilustrarla, porque los valores que
-    # importan ya estan verificados arriba contra los cmdlets del hipervisor.
-    # El archivo sigue en el repositorio para quien quiera revisar la etapa
-    # previa: evidencias/fotos/instalacion/02-recursos-vm.png.
+    # De la etapa previa sobre VirtualBox NO se conserva ninguna captura en el
+    # entregable. Las que habia correspondian a otra maquina -otro usuario, otro
+    # nombre de host- y sus cifras contradecian a las de la maquina entregada,
+    # de modo que ilustrar la configuracion de recursos con ellas habria sido
+    # peor que no ilustrarla. El cambio de hipervisor se sigue declarando en
+    # prosa, que es lo que exige la honestidad, y los recursos quedan
+    # verificados contra los cmdlets del hipervisor en la tabla de arriba.
     b.append(p(
-        "La etapa previa sobre " + HIPERVISOR_PLANIFICADO + " queda archivada en "
-        "evidencias/fotos/instalacion/, donde consta la creacion de la maquina con esos "
-        "mismos recursos. No se reproduce como figura porque no es la maquina entregada y "
-        "sus valores ya estan verificados arriba contra los cmdlets del hipervisor."))
+        "De la etapa previa sobre " + HIPERVISOR_PLANIFICADO + " no se conserva ninguna "
+        "captura en el entregable, y por eso esta subsección no lleva figura: las "
+        "imágenes de esa etapa correspondían a otra máquina, con otro usuario y otro "
+        "nombre de host, de modo que presentarlas habría contradicho lo que documenta el "
+        "resto del informe. La única evidencia gráfica de instalación es la de la máquina "
+        "definitiva sobre " + hv["hipervisor_implementado"] + " (" + ref("instalador")
+        + " y " + ref("primer_inicio") + "); los recursos comprometidos en el hito ya "
+        "quedaron verificados arriba contra los cmdlets del hipervisor."))
 
-    b.append(h2("instalador", "Instalacion, usuario y particionado del disco virtual"))
+    b.append(h2("instalador", "Instalación, usuario y particionado del disco virtual"))
     b.append(p(
-        "Las capturas de esta seccion y de la siguiente son de la instalacion REAL de la "
-        "maquina definitiva sobre Hyper-V. Se creo de Generacion " + hv["generacion"]
+        "Las capturas de esta sección y de la siguiente son de la instalación REAL de la "
+        "máquina definitiva sobre Hyper-V. Se creó de Generación " + hv["generacion"]
         + ", con firmware BIOS heredado, y su orden de arranque ("
         + hv["orden_arranque"] + ") explica que el instalador arranque en modo BIOS y no "
-        "UEFI. Se creo el usuario sin privilegios " + d["usuario_vm"] + ", con acceso a "
-        "sudo, y el host quedo como " + d["hostname_vm"] + ", de modo que cualquier salida "
-        "de este informe se atribuye sin ambiguedad a la maquina del equipo."))
+        "UEFI. Se creó el usuario sin privilegios " + d["usuario_vm"] + ", con acceso a "
+        "sudo, y el host quedó como " + d["hostname_vm"] + ", de modo que cualquier salida "
+        "de este informe se atribuye sin ambigüedad a la máquina del equipo."))
     b.append(fig(imgs_hv["01-menu-instalador-debian13.png"],
-                 "Menu del instalador de Debian 13 en modo BIOS, en la maquina "
-                 "de Generacion " + hv["generacion"] + " de Hyper-V. Instalacion real de "
-                 "la maquina definitiva.", texto_pt=7.0))
+                 "Menú del instalador de Debian 13 en modo BIOS, en la máquina "
+                 "de Generación " + hv["generacion"] + " de Hyper-V. Instalación real de "
+                 "la máquina definitiva.", texto_pt=7.0))
     b.append(fig(imgs_hv["02-linea-de-arranque-preseed.png"],
-                 "Linea de arranque del instalador con el archivo de "
-                 "preconfiguracion (preseed), que fija idioma, teclado, zona horaria, "
-                 "particionado guiado y el conjunto minimo de tareas. Usar preseed hace "
-                 "la instalacion reproducible: el mismo archivo produce la misma "
-                 "maquina."))
+                 "Línea de arranque del instalador con el archivo de "
+                 "preconfiguración (preseed), que fija idioma, teclado, zona horaria, "
+                 "particionado guiado y el conjunto mínimo de tareas. Usar preseed hace "
+                 "la instalación reproducible: el mismo archivo produce la misma "
+                 "máquina."))
     b.append(fig(imgs_hv["03-instalacion-sistema-base.png"],
-                 "Instalacion del sistema base: descarga e instalacion de paquetes desde "
-                 "la replica de red. La etapa final del instalador -gestor de arranque y "
-                 "copia de la configuracion de red al sistema instalado- es la misma "
-                 "pantalla de progreso y esta archivada en "
+                 "Instalación del sistema base: descarga e instalación de paquetes desde "
+                 "la réplica de red. La etapa final del instalador -gestor de arranque y "
+                 "copia de la configuración de red al sistema instalado- es la misma "
+                 "pantalla de progreso y está archivada en "
                  "evidencias/fotos/instalacion-hyperv/04-instalacion-final.png."))
-    b.append(p("El particionado se aplico sobre el disco de " + hv["vhd_gb"]
-               + " GB con el esquema guiado \"todo en una particion\":"))
+    b.append(p("El particionado se aplicó sobre el disco de " + hv["vhd_gb"]
+               + " GB con el esquema guiado \"todo en una partición\":"))
     b.append(code("$ lsblk", d["lsblk"]))
     b.append(ul([
-        "sda1 (23.7 GB, ext4) es la particion raiz montada en /; sda2 es solo el "
-        "contenedor logico de la extendida y sda5 (1.3 GB) es el area de intercambio, "
-        "que el nucleo usa para descargar paginas cuando la memoria fisica escasea.",
-        "sr0 es la unidad optica virtual desde la que se monto el ISO de instalacion; "
-        "terminada la instalacion el ISO fue expulsado, como consta en la salida de "
-        "Get-VMDvdDrive del anfitrion.",
+        "sda1 (23.7 GB, ext4) es la partición raíz montada en /; sda2 es sólo el "
+        "contenedor lógico de la extendida y sda5 (1.3 GB) es el área de intercambio, "
+        "que el núcleo usa para descargar páginas cuando la memoria física escasea.",
+        "sr0 es la unidad óptica virtual desde la que se montó el ISO de instalación; "
+        "terminada la instalación el ISO fue expulsado, como consta en la salida de "
+        "Get-VMDvdDrive del anfitrión.",
     ]))
 
     b.append(h2("primer_inicio", "Primer inicio y conectividad"))
     b.append(fig(imgs_hv["05-primer-inicio.png"],
-                 "Primer inicio del sistema recien instalado: el nucleo llega a "
+                 "Primer inicio del sistema recién instalado: el núcleo llega a "
                  "la consola tty1 y presenta el indicador de acceso del equipo "
                  + d["hostname_vm"] + ". La captura muestra el indicador de acceso, no la "
-                 "sesion ya iniciada; que el acceso con el usuario " + d["usuario_vm"]
+                 "sesión ya iniciada; que el acceso con el usuario " + d["usuario_vm"]
                  + " funciona lo demuestra el resto del informe, cuyas salidas fueron "
-                 "obtenidas en esa sesion."))
+                 "obtenidas en esa sesión."))
     b.append(p(
-        "eth0 obtiene su direccion por DHCP desde el conmutador " + hv["switch"]
-        + " y la ruta por omision apunta a " + d["gateway"] + ". " + hv["nat"]
-        + " El anfitrion ve la misma direccion (" + hv["ip_hyperv"] + ", MAC "
+        "eth0 obtiene su dirección por DHCP desde el conmutador " + hv["switch"]
+        + " y la ruta por omisión apunta a " + d["gateway"] + ". " + hv["nat"]
+        + " El anfitrión ve la misma dirección (" + hv["ip_hyperv"] + ", MAC "
         + hv["mac"] + "), lo que cierra la trazabilidad entre lo que declara Hyper-V y lo "
-        "que observa el huesped. Con esa configuracion la maquina alcanza las replicas de "
-        "Debian, como confirman la resolucion de deb.debian.org y las lineas \"Hit\" de "
-        "apt de la seccion siguiente."))
+        "que observa el huésped. Con esa configuración la máquina alcanza las réplicas de "
+        "Debian, como confirman la resolución de deb.debian.org y las líneas \"Hit\" de "
+        "apt de la sección siguiente."))
     b.append(code("$ ip -4 -br addr show ; ip route ; getent hosts deb.debian.org",
                   d["red"] + "\n" + d["dns"]))
 
     # --------------------------------------------- 3. Preparacion del ambiente
-    b.append(h1("ambiente", "Preparacion del ambiente"))
+    b.append(h1("ambiente", "Preparación del ambiente"))
     b.append(p(
         "El punto 2.a de la pauta exige actualizar el sistema antes de trabajar. La "
-        "salida confirma que los tres origenes de paquetes estan accesibles (trixie, "
-        "trixie-security y trixie-updates) y que el sistema quedo al dia."))
+        "salida confirma que los tres orígenes de paquetes están accesibles (trixie, "
+        "trixie-security y trixie-updates) y que el sistema quedó al día."))
     # Se transcriben las lineas evaluables (origenes accesibles y estado final)
     # y se marca la elision del resto con [...], como en el resto del informe.
     b.append(code("$ sudo apt update ; sudo apt upgrade -y",
@@ -1461,10 +1560,10 @@ def construir_documento(d, imgs_hv):
                   + "\n".join(d["apt_upgrade"].splitlines()[-3:])))
     b.append(p(
         "El punto 2.b pide instalar el entorno del lenguaje usado en la Parte 1. El "
-        "proyecto esta en Python y Debian 13 ya trae " + d["python_version"] + " en el "
+        "proyecto está en Python y Debian 13 ya trae " + d["python_version"] + " en el "
         "sistema base, de modo que no hubo que compilar ni agregar repositorios externos. "
         + d["sin_dependencias"] + ": sin pip, sin entorno virtual y sin archivo de "
-        "requisitos, decision deliberada porque hace reproducible la ejecucion incluso sin "
+        "requisitos, decisión deliberada porque hace reproducible la ejecución incluso sin "
         "red. " + d["compilacion"]))
     # OJO: d["compilacion"] es una frase de prosa del archivo de evidencia, no
     # una linea que haya escrito ninguna terminal. Va en el parrafo anterior y
@@ -1478,12 +1577,12 @@ def construir_documento(d, imgs_hv):
                   d["python_version"] + "\n" + d["apt_list"]))
 
     # ------------------------------------------ 4. Ejecucion de la Parte 1
-    b.append(h1("parte1", "Ejecucion de la Parte 1 en Debian"))
+    b.append(h1("parte1", "Ejecución de la Parte 1 en Debian"))
     b.append(p(
         "El punto 2.c exige ejecutar ambas versiones sobre el mismo conjunto de archivos "
-        ".jsonl y comprobar que seis metricas coinciden. Para que \"el mismo conjunto\" sea "
+        ".jsonl y comprobar que seis métricas coinciden. Para que \"el mismo conjunto\" sea "
         "verificable, la entrada se genera con semilla fija y se le calcula una suma de "
-        "verificacion antes de cada corrida."))
+        "verificación antes de cada corrida."))
     b.append(code("$ cd " + d["dir_trabajo"] + "\n"
                   "$ python3 scripts/generar_archivos_entrada.py\n"
                   "$ cat entrada/*.jsonl | sha256sum\n"
@@ -1500,34 +1599,34 @@ def construir_documento(d, imgs_hv):
                   + "   (tiempo interno " + d["t_con"]["interno"] + " s, "
                   + d["t_con"]["trabajadores"] + " trabajadores)"))
 
-    b.append(h2("metricas", "Las seis metricas exigidas por la pauta"))
-    b.append(tabla(["Metrica", "Secuencial", "Concurrente", "Coincide"],
+    b.append(h2("metricas", "Las seis métricas exigidas por la pauta"))
+    b.append(tabla(["Métrica", "Secuencial", "Concurrente", "Coincide"],
                    d["tabla_metricas"], anchos=[5.0, 4.0, 4.0, 3.5]))
-    b.append(p("Metricas comparadas: " + d["metricas_comparadas"] + ". "
+    b.append(p("Métricas comparadas: " + d["metricas_comparadas"] + ". "
                + d["resultado_consistencia"] + ". El resumen consolidado agrega "
-               + res["Lineas leidas"] + " lineas leidas, temperatura promedio "
+               + res["Lineas leidas"] + " líneas leídas, temperatura promedio "
                + res.get("Temperatura promedio global", "?") + ", humedad promedio "
-               + res.get("Humedad promedio global", "?") + " y estacion con mas alertas "
+               + res.get("Humedad promedio global", "?") + " y estación con más alertas "
                + res.get("Estacion con mayor cantidad de alertas", "?")
                + ". El entregable conserva el resumen de la corrida concurrente en "
                "salida/resumen_ambiental.txt."))
 
     b.append(h2("consistencia", "Comprobaciones adicionales de consistencia"))
     b.append(p(
-        "Seis totales podrian coincidir por casualidad si dos errores se compensaran, de "
-        "modo que se agregaron dos comprobaciones mas exigentes que las que pide la pauta: "
+        "Seis totales podrían coincidir por casualidad si dos errores se compensaran, de "
+        "modo que se agregaron dos comprobaciones más exigentes que las que pide la pauta: "
         "los " + d["informes_comparados"] + " informes individuales comparados uno por "
         "uno, con " + d["informes_con_diferencias"] + " diferencias, y el contenido "
-        "completo de la bitacora de alertas, con " + d["alertas_sec"] + " alertas en el "
+        "completo de la bitácora de alertas, con " + d["alertas_sec"] + " alertas en el "
         "secuencial y " + d["alertas_con"] + " en el concurrente. El orden de escritura "
-        "del concurrente varia por diseno, porque " + d["t_con"]["trabajadores"]
-        + " hilos vuelcan sus buferes en momentos distintos; por eso el volcado final se "
+        "del concurrente varía por diseño, porque " + d["t_con"]["trabajadores"]
+        + " hilos vuelcan sus búferes en momentos distintos; por eso el volcado final se "
         "ordena por nombre de archivo. " + d["veredicto_log"]))
     b.append(nota(
-        "Resultado incomodo que se declara tal cual se midio: la concurrente fue mas "
+        "Resultado incómodo que se declara tal cual se midió: la concurrente fue más "
         "LENTA que la secuencial en este conjunto (" + d["t_sec"]["real"] + " frente a "
         + d["t_con"]["real"] + " de tiempo real; " + d["t_sec"]["interno"] + " s frente a "
-        + d["t_con"]["interno"] + " s de tiempo interno). La explicacion esta en "
+        + d["t_con"]["interno"] + " s de tiempo interno). La explicación está en "
         + ref("concurrencia") + "."))
     # El pie de esta figura NO se escribe a ciegas: se comprueba que la captura
     # muestre de verdad las filas de la tabla. Si la tabla salio vacia en la
@@ -1537,17 +1636,17 @@ def construir_documento(d, imgs_hv):
     captura_7 = recortar_consola(FOTOS / "debian-01-consistencia-parte1.png")
     filas_7 = filas_visibles_de_la_tabla(captura_7)
     if filas_7 is not None and filas_7 >= 4:
-        pie_7 = ("Comprobacion de consistencia en la consola de la maquina "
-                 "virtual: las seis metricas coinciden, los " + d["informes_comparados"]
-                 + " informes individuales son identicos y la bitacora de alertas tiene "
+        pie_7 = ("Comprobación de consistencia en la consola de la máquina "
+                 "virtual: las seis métricas coinciden, los " + d["informes_comparados"]
+                 + " informes individuales son idénticos y la bitácora de alertas tiene "
                  + d["alertas_sec"] + " alertas en ambas versiones.")
     else:
-        pie_7 = ("Comprobacion de consistencia ejecutada en la consola de la "
-                 "maquina virtual. En esta captura el cuerpo de la tabla comparativa no "
-                 "alcanzo a quedar en pantalla: se ven el encabezado, los separadores y "
+        pie_7 = ("Comprobación de consistencia ejecutada en la consola de la "
+                 "máquina virtual. En esta captura el cuerpo de la tabla comparativa no "
+                 "alcanzó a quedar en pantalla: se ven el encabezado, los separadores y "
                  "el resultado final (los " + d["informes_comparados"] + " informes "
-                 "individuales identicos y las " + d["alertas_sec"] + " alertas de la "
-                 "bitacora en ambas versiones). La comparacion metrica por metrica es la "
+                 "individuales idénticos y las " + d["alertas_sec"] + " alertas de la "
+                 "bitácora en ambas versiones). La comparación métrica por métrica es la "
                  "de la tabla de " + ref("metricas") + ", tomada de "
                  "evidencias/debian/03-ejecucion-parte1.txt.")
     # Esta captura es un recorte pequeno (544x294): a ancho de columna completo
@@ -1562,70 +1661,80 @@ def construir_documento(d, imgs_hv):
         "El punto 2.d enumera trece requisitos para src/gestor_incidencias.py. La tabla "
         "los recorre uno por uno con la evidencia que los respalda; todas las cifras "
         "provienen del estado real del proyecto y de los archivos de evidencia, y el "
-        "generador comprueba que ambas fuentes coincidan antes de escribir esta pagina."))
+        "generador comprueba que ambas fuentes coincidan antes de escribir esta página."))
     b.append(tabla(
         ["N", "Requisito de la pauta", "Evidencia obtenida"],
         [["1", "Detectar informes informe_CODIGO_AAAAMMDD.txt",
-          "Patron ^informe_[A-Za-z0-9]+_\\d{8}(_v\\d+)?\\.txt$; "
+          "Patrón ^informe_[A-Za-z0-9]+_\\d{8}(_v\\d+)?\\.txt$; "
           + str(inv["resumen"]["total_informes"]) + " informes detectados"],
          ["2", "Leer la cantidad de alertas de cada informe",
-          "Linea \"Alertas detectadas: N\" de cada informe; suma "
+          "Línea \"Alertas detectadas: N\" de cada informe; suma "
           + str(inv["total_alertas"]) + " alertas"],
          ["3", "Mover informes con 0 alertas a sin_alertas/",
           "Rama implementada; queda en " + str(d["n_sin"]) + " informes (ver "
-          + ref("sin_alertas") + ") y se demostro con " + d["ctl_informe"]],
+          + ref("sin_alertas") + ") y se demostró con " + d["ctl_informe"]],
          ["4", "Mover informes con 1 a 3 alertas a con_alertas/",
           str(d["n_con"]) + " informes en gestion_ambiental/con_alertas/"],
-         ["5", "Mover informes con 4 o mas alertas a criticas/",
+         ["5", "Mover informes con 4 o más alertas a criticas/",
           str(d["n_crit"]) + " informes en gestion_ambiental/criticas/"],
          ["6", "Evitar sobrescritura mediante nombres _v1, _v2",
           "Tres corridas acumulan " + d["encontrados_v"] + " informes, "
-          + d["con_sufijo_v"] + " de ellos con sufijo _v1 o _v2, sin perdidas (ver "
+          + d["con_sufijo_v"] + " de ellos con sufijo _v1 o _v2, sin pérdidas (ver "
           + ref("anti") + ")"],
          ["7", "Copiar el resumen como resumen_resguardado.txt",
           "Copia de " + str(d["resguardo_bytes"])
-          + " bytes, identica al original que permanece en salida/"],
+          + " bytes, idéntica al original que permanece en salida/"],
          ["8", "Leer alertas/alertas_detectadas.log",
-          str(d["n_alertas_log"]) + " lineas del formato "
+          str(d["n_alertas_log"]) + " líneas del formato "
           "archivo;estacion;timestamp;indicador;valor;umbral"],
          ["9", "Separar alertas por indicador",
           "temperatura " + str(ind["temperatura"]) + ", humedad " + str(ind["humedad"])
           + ", pm25 " + str(ind["pm25"]) + ", ruido " + str(ind["ruido"])],
-         ["10", "Registrar alertas invalidas o desconocidas",
-          d["anomalias_total"] + " anomalias registradas al inyectar fallas (ver "
+         ["10", "Registrar alertas inválidas o desconocidas",
+          d["anomalias_total"] + " anomalías registradas al inyectar fallas (ver "
           + ref("errores") + ")"],
          ["11", "Generar inventario_ambiental.json",
           "Archivo de " + str(d["inventario_bytes"]) + " bytes, "
           + d["json_valido"] + " con " + d["n_claves_inventario"]
           + " claves de primer nivel"],
          ["12", "Generar logs/gestion_ambiental.log",
-          "Bitacora de " + d["ev_n_bitacora"] + " lineas y " + d["stat_size"]
+          "Bitácora de " + d["ev_n_bitacora"] + " líneas y " + d["stat_size"]
           + " bytes, con marca de tiempo por evento"],
          ["13", "Controlar al menos un error sin detenerse",
-          "Con cuatro fallas el gestor termino con codigo " + d["gestor_exit_error"]
-          + " y conservo las " + d["inventario_tras_error"] + " alertas (ver "
+          "Con cuatro fallas el gestor terminó con código " + d["gestor_exit_error"]
+          + " y conservó las " + d["inventario_tras_error"] + " alertas (ver "
           + ref("errores") + ")"]],
         anchos=[0.8, 6.2, 9.5]))
 
     b.append(h2("estructura", "Estructura generada"))
     b.append(code("$ find gestion_ambiental logs -type d | sort",
                   d["find_dirs"]))
-    b.append(p("Bajo gestion_ambiental/ quedaron " + d["find_files_total"]
-               + " archivos: los " + str(inv["resumen"]["total_informes"])
-               + " informes clasificados, los cuatro registros por indicador, el "
-               "inventario y el resumen resguardado. El gestor termino con codigo "
-               + d["gestor_exit"] + " en su unica ejecucion sobre el arbol entregado."))
+    # La cifra se lee del arbol entregado, no se fija a mano: el gestor produjo
+    # los archivos de la corrida y el control de versiones agrego ademas el
+    # marcador sin_alertas/.gitkeep, sin el cual git no conservaria una carpeta
+    # que quedo legitimamente vacia. Por eso el arbol trae uno mas que la
+    # evidencia congelada, y recolectar_datos() comprueba que la diferencia sea
+    # exactamente ese marcador.
+    b.append(p("Bajo gestion_ambiental/ quedaron " + d["n_archivos_gestion"]
+               + " archivos: los " + d["find_files_total"] + " que produjo el gestor -los "
+               + str(inv["resumen"]["total_informes"]) + " informes clasificados, los "
+               "cuatro registros por indicador, el inventario y el resumen resguardado, "
+               "los mismos que registra la evidencia- más el marcador "
+               + d["marcador_vacio"] + ", con el que el control de versiones conserva una "
+               "carpeta que quedó legítimamente vacía (" + ref("sin_alertas")
+               + "). El gestor terminó con código " + d["gestor_exit"] + " en su única "
+               "ejecución sobre el árbol entregado."))
     b.append(fig(recortar_consola(FOTOS / "debian-03-estructura-gestor.png"),
                  "Estructura generada por el gestor y cuadratura de las alertas por "
-                 "indicador, en la maquina virtual."))
+                 "indicador, en la máquina virtual.", texto_pt=7.0))
 
     b.append(h2("cuadratura", "Inventario y cuadratura de las alertas"))
     b.append(p(
-        "El valor del inventario no esta en existir sino en cuadrar: la suma de las "
-        "alertas por indicador debe ser igual al total del inventario, al numero de lineas "
-        "de la bitacora de alertas y al total del resumen consolidado. El generador "
-        "verifica esa igualdad y ademas que el numero leido en el repositorio sea el mismo "
-        "de la evidencia congelada; si alguna comprobacion falla, se detiene."))
+        "El valor del inventario no está en existir sino en cuadrar: la suma de las "
+        "alertas por indicador debe ser igual al total del inventario, al número de líneas "
+        "de la bitácora de alertas y al total del resumen consolidado. El generador "
+        "verifica esa igualdad y además que el número leído en el repositorio sea el mismo "
+        "de la evidencia congelada; si alguna comprobación falla, se detiene."))
     b.append(tabla(
         ["Fuente", "Alertas", "Fuente", "Alertas"],
         [["alertas_por_indicador/temperatura", str(ind["temperatura"]),
@@ -1637,95 +1746,103 @@ def construir_documento(d, imgs_hv):
          ["alertas_por_indicador/ruido", str(ind["ruido"]),
           "salida/resumen_ambiental.txt", res["Alertas totales"]]],
         anchos=[5.6, 1.8, 5.6, 1.8]))
+    # El extracto reproduce la ESTRUCTURA real del archivo: las cifras de
+    # cuadratura cuelgan de "resumen", no del primer nivel. Confundirlo hacia
+    # que el informe mostrara como claves de primer nivel cuatro que no lo son.
+    # Los tres subarboles largos se eliden con la misma marca [...] que el
+    # resto del informe; las ocho claves de primer nivel quedan todas a la
+    # vista, que es lo que el requisito 11 pide poder comprobar.
     b.append(code("$ python3 -m json.tool gestion_ambiental/inventario_ambiental.json",
-                  json.dumps(inv["resumen"], indent=2, ensure_ascii=False)
-                  + "\n...\n"
-                  + "\n".join(d["bitacora_final"].splitlines()[-3:])))
+                  extracto_inventario(inv)))
+    b.append(p(
+        "total_alertas aparece dos veces porque el inventario lo declara dentro de "
+        "resumen y también en la raíz; ambos valores son el mismo número que cuadra la "
+        "tabla anterior, y la bitácora cierra la corrida declarando ese mismo par:"))
+    b.append(code("$ grep 'Inventario generado' logs/gestion_ambiental.log",
+                  d["cierre_inventario"]))
 
-    b.append(h2("sin_alertas", "Por que sin_alertas/ quedo vacia"))
+    b.append(h2("sin_alertas", "Por qué sin_alertas/ quedó vacía"))
     b.append(p(
         "La carpeta sin_alertas/ contiene " + str(d["n_sin"]) + " informes y no es un "
         "defecto del gestor: la pauta de la Parte 1 exige que cada archivo de entrada "
-        "produzca al menos una alerta, de modo que ningun informe puede tener cero y la "
-        "rama queda legitimamente vacia. La rama existe y funciona: con el informe de "
-        "control " + d["ctl_informe"] + ", construido con cero alertas, el gestor lo movio "
-        "a sin_alertas/ y la clasificacion quedo en " + d["clasificacion_ctl"] + ". Esa "
-        "demostracion se hizo sobre una COPIA, por lo que el arbol entregado conserva sus "
+        "produzca al menos una alerta, de modo que ningún informe puede tener cero y la "
+        "rama queda legítimamente vacía. La rama existe y funciona: con el informe de "
+        "control " + d["ctl_informe"] + ", construido con cero alertas, el gestor lo movió "
+        "a sin_alertas/ y la clasificación quedó en " + d["clasificacion_ctl"] + ". Esa "
+        "demostración se hizo sobre una COPIA, por lo que el árbol entregado conserva sus "
         + str(d["n_sin"]) + " informes en esa rama."))
 
-    b.append(h2("leeme", "Por que salida/ solo conserva el resumen"))
+    b.append(h2("leeme", "Por qué salida/ sólo conserva el resumen"))
     b.append(p(
-        "En el arbol entregado, salida/ contiene solo resumen_ambiental.txt y LEEME.txt. "
-        "No falta nada: los " + d["informes_generados"] + " informes individuales SI se "
-        "generaron ahi (src/concurrente.py) y el gestor los MOVIO a sus carpetas de "
-        "clasificacion, que es lo que exigen los puntos 3, 4 y 5 de la pauta. Mover y no "
+        "En el árbol entregado, salida/ contiene sólo resumen_ambiental.txt y LEEME.txt. "
+        "No falta nada: los " + d["informes_generados"] + " informes individuales SÍ se "
+        "generaron ahí (src/concurrente.py) y el gestor los MOVIÓ a sus carpetas de "
+        "clasificación, que es lo que exigen los puntos 3, 4 y 5 de la pauta. Mover y no "
         "copiar se explica en " + ref("mover_copiar") + ". Antes de ejecutar el gestor se "
-        "respaldo salida/ completo, de modo que el estado que dejo la Parte 1 tambien es "
+        "respaldó salida/ completo, de modo que el estado que dejó la Parte 1 también es "
         "auditable:"))
     b.append(ul([
         "salida/resumen_ambiental.txt (" + str(d["resumen_bytes"]) + " bytes): el "
         "consolidado que la pauta pide mantener en su lugar.",
-        "salida/LEEME.txt: explica esta situacion dentro del propio entregable e indica "
-        "como regenerar los informes.",
+        "salida/LEEME.txt: explica esta situación dentro del propio entregable e indica "
+        "cómo regenerar los informes.",
         "evidencias/salida_parte1/: " + d["respaldo_parte1"] + " archivos, es decir los "
-        + d["informes_generados"] + " informes individuales mas el resumen, tal como los "
-        "dejo la Parte 1 antes de la clasificacion.",
+        + d["informes_generados"] + " informes individuales más el resumen, tal como los "
+        "dejó la Parte 1 antes de la clasificación.",
     ]))
 
     # -------------------------------- 6. Observacion de procesos y archivos
-    b.append(h1("procesos", "Observacion de procesos y del sistema de archivos"))
+    b.append(h1("procesos", "Observación de procesos y del sistema de archivos"))
     b.append(nota(
-        "Nota metodologica sobre la carga amplificada. El conjunto oficial de "
+        "Nota metodológica sobre la carga amplificada. El conjunto oficial de "
         + d["archivos_generados"] + " archivos se procesa en milisegundos y ps no alcanza "
-        "a tomar una muestra util. Por eso la observacion se hizo en dos partes: (A) el "
+        "a tomar una muestra útil. Por eso la observación se hizo en dos partes: (A) el "
         "consumo de la corrida OFICIAL con /usr/bin/time -v, que no necesita muestreo; y "
-        "(B) la observacion en vivo con ps sobre una CARGA AMPLIFICADA de "
-        + d["carga_archivos"] + " archivos (" + d["carga_lineas"] + " lineas), los mismos "
-        "archivos oficiales replicados con otras fechas validas. " + d["copias_demo"]
-        + " Toda metrica entregable sale del conjunto oficial; la carga amplificada solo "
+        "(B) la observación en vivo con ps sobre una CARGA AMPLIFICADA de "
+        + d["carga_archivos"] + " archivos (" + d["carga_lineas"] + " líneas), los mismos "
+        "archivos oficiales replicados con otras fechas válidas. " + d["copias_demo"]
+        + " Toda métrica entregable sale del conjunto oficial; la carga amplificada sólo "
         "hace que el proceso viva lo suficiente para observarlo ("
         + d["muestras_ps"] + " muestras)."))
 
     b.append(h2("recursos", "Consumo de recursos de la corrida oficial"))
     b.append(code("$ /usr/bin/time -v python3 src/concurrente.py", d["time_v"]))
     b.append(ul([
-        "Percent of CPU " + d["pct_cpu_oficial"] + " sobre centesimas de segundo: con "
-        "solo " + d["archivos_generados"] + " archivos el proceso apenas alcanza a "
+        "Percent of CPU " + d["pct_cpu_oficial"] + " sobre centésimas de segundo: con "
+        "sólo " + d["archivos_generados"] + " archivos el proceso apenas alcanza a "
         "repartir trabajo antes de terminar.",
         "Maximum resident set size " + d["max_rss"] + " KB (unos "
-        + "%.1f" % (int(d["max_rss"]) / 1024.0) + " MB de memoria fisica): el costo del "
-        "interprete de Python mas los acumuladores del programa.",
+        + "%.1f" % (int(d["max_rss"]) / 1024.0) + " MB de memoria física): el costo del "
+        "intérprete de Python más los acumuladores del programa.",
         d["ctx_vol"] + " cambios de contexto voluntarios y " + d["ctx_invol"]
         + " involuntarios. Los voluntarios son el proceso cediendo la CPU por su cuenta "
         "al esperar entrada/salida o un mutex; los involuntarios son el planificador "
-        "expulsandolo al agotar su cuanto. " + d["fs_outputs"] + " bloques escritos "
-        "corresponden a los informes, el resumen y la bitacora de alertas.",
+        "expulsándolo al agotar su cuanto. " + d["fs_outputs"] + " bloques escritos "
+        "corresponden a los informes, el resumen y la bitácora de alertas.",
     ]))
 
-    b.append(h2("identificacion", "Identificacion del proceso concurrente"))
+    b.append(h2("identificacion", "Identificación del proceso concurrente"))
     b.append(code(d["ps_cmd"], d["ps_cabecera"] + "\n" + d["ps_linea"]))
     b.append(tabla(
-        ["Campo", "Valor", "Que significa en este proceso concreto"],
+        ["Campo", "Valor", "Qué significa en este proceso concreto"],
         [["PID", d["pid"],
-          "Identificador que el nucleo asigno al proceso que ejecuta "
-          "python3 src/concurrente.py; es unico mientras el proceso vive."],
+          "Identificador que el núcleo asignó al proceso que ejecuta "
+          "python3 src/concurrente.py; es único mientras el proceso vive."],
          ["PPID", d["ppid"],
           "Proceso padre: " + d["padre"].splitlines()[-1].strip()
-          + ". Es el shell desde el que se lanzo la ejecucion."],
-         ["STAT", d["stat"],
-          "S: en el instante de la muestra el proceso dormia en espera interrumpible "
-          "(entrada/salida o mutex); la l final significa multihilo. En otras muestras "
-          "aparece R, ejecutandose en CPU."],
-         ["%CPU", d["pcpu"] + " (max. " + d["pcpu_max"] + ")",
-          "Que supere el 100 % es la prueba de trabajo simultaneo en mas de un nucleo: "
-          "un proceso de un solo hilo no puede pasar de 100 %."],
+          + ". Es el intérprete de órdenes desde el que se lanzó la ejecución."],
+         ["STAT", d["stat"], d["stat_explicacion"]],
+         ["%CPU", d["pcpu"] + " (máx. " + d["pcpu_max"] + ")",
+          "ps lo promedia sobre toda la vida del proceso, y esta muestra aún arrastra el "
+          "arranque. El trabajo simultáneo en más de un núcleo lo prueba el máximo "
+          "observado, " + d["pcpu_max"] + ": un proceso de un solo hilo no pasa de 100 %."],
          ["%MEM", d["pmem"],
-          "Fraccion de los " + hv["ram_gb"] + " GB de memoria fisica ocupada por el "
+          "Fracción de los " + hv["ram_gb"] + " GB de memoria física ocupada por el "
           "proceso; es baja porque el programa procesa por flujo y no carga todo en "
           "memoria."],
          ["RSS", d["rss"] + " KB",
           "Memoria residente: la parte del proceso efectivamente cargada en RAM, que es "
-          "lo que cuesta de verdad en memoria fisica."],
+          "lo que cuesta de verdad en memoria física."],
          ["VSZ", d["vsz"] + " KB",
           "Memoria virtual reservada, unas trece veces el RSS: incluye bibliotecas "
           "compartidas, pilas de hilos y regiones que nunca se tocaron, por lo que no "
@@ -1735,7 +1852,7 @@ def construir_documento(d, imgs_hv):
           + " trabajadores, exactamente los que declara el programa."]],
         anchos=[1.5, 2.6, 12.4]))
 
-    b.append(h2("hilos", "Hilos y vista del nucleo"))
+    b.append(h2("hilos", "Hilos y vista del núcleo"))
     b.append(code("$ ps -L -o pid,tid,stat,%cpu,comm -p " + d["pid"] + "\n"
                   "$ grep -E 'State|Threads|VmRSS' /proc/" + d["pid"] + "/status",
                   d["ps_hilos"] + "\n" + d["proc_status"]))
@@ -1743,28 +1860,45 @@ def construir_documento(d, imgs_hv):
         "Los cuatro identificadores de hilo comparten el mismo PID pero tienen TID "
         "distintos: el primero coincide con el PID y es el hilo principal, que encola y "
         "espera; los otros " + d["t_con"]["trabajadores"] + " consumen de la cola. El "
-        "nucleo confirma Threads: " + d["proc_threads"] + " y VmRSS: " + d["proc_vmrss"]
+        "núcleo confirma Threads: " + d["proc_threads"] + " y VmRSS: " + d["proc_vmrss"]
         + " kB, coherente con ps, y State: " + d["proc_estado"] + ". Que el estado sea "
         "\"sleeping\" en una muestra y \"running\" en otra no es contradictorio: los hilos "
-        "alternan entre calculo y espera por entrada/salida."))
-    b.append(code("$ ps -o pid,ppid,stat,%cpu,%mem,rss,vsz,nlwp,cmd -p <PID>   "
-                  "# muestras sucesivas", d["ps_evolucion"]))
+        "alternan entre cálculo y espera por entrada/salida."))
+    # La evolucion es un bloque APARTE, con su propio encabezado: sus filas
+    # pertenecen a muestras sucesivas del mismo proceso y no a la muestra de
+    # identificacion de 6.2. Mezclarlas era lo que hacia que el informe
+    # imprimiera bajo el comando de identificacion una fila que la evidencia
+    # registra en este otro bloque.
+    b.append(h2("evolucion", "Evolución del proceso durante la ejecución"))
+    b.append(code(d["ps_cmd"] + "   # repetido sobre el mismo PID",
+                  d["ps_cabecera"] + "\n" + d["ps_evolucion"]))
     b.append(p(
         "La primera muestra fue tomada antes de que arrancaran los trabajadores: un solo "
-        "hilo, 0.0 % de CPU y unos 7 MB residentes. En las siguientes NLWP sube a "
-        + d["nlwp"] + ", el %CPU pasa de 100 y el RSS crece de forma sostenida a medida "
-        "que se llenan los acumuladores. Esa progresion es la concurrencia hecha visible."))
+        "hilo (NLWP " + d["evo_nlwp_inicial"] + "), " + d["evo_pcpu_inicial"]
+        + " % de CPU y " + d["evo_rss_inicial_mb"] + " MB residentes. En las siguientes "
+        "NLWP sube a " + d["nlwp"] + ", el %CPU pasa de 100 y el RSS crece de forma "
+        "sostenida a medida que se llenan los acumuladores; en la última los trabajadores "
+        "ya terminaron y NLWP vuelve a " + d["evo_nlwp_final"] + " con el %CPU acumulado "
+        "en " + d["evo_pcpu_final"] + ". Esa progresión es la concurrencia hecha visible."))
+    # Pie honesto de esta figura: la carga es la MISMA que la transcrita (los
+    # mismos archivos y lineas que declara el encabezado de la pantalla); lo
+    # que cambia es la corrida, y con ella el PID, el RSS y el %CPU maximo.
+    # Omitir el %CPU -que es justo el valor mas llamativo- para enumerar solo
+    # PID y RSS descargaba de mas al lector.
     b.append(fig(recortar_consola(FOTOS / "debian-02-observacion-procesos.png"),
-                 "Observacion en vivo del proceso concurrente en la consola de la "
-                 "maquina virtual. Es otra corrida de la misma prueba, con su propia "
-                 "carga amplificada -la que declara el encabezado de la pantalla, "
-                 "distinta de la transcrita arriba- y por eso muestra otro PID y otro "
-                 "RSS; coincide en estructura y en orden de magnitud: un proceso con "
-                 + d["nlwp"] + " hilos vivos, %CPU por encima de 100 y el mismo "
-                 "du -sh de " + d["du_proyecto"] + " del proyecto."))
+                 "Observación en vivo del proceso concurrente en la consola de la "
+                 "máquina virtual. Es otra corrida de la misma prueba y con la MISMA "
+                 "carga amplificada: los " + d["carga_archivos"] + " archivos y "
+                 + d["carga_lineas"] + " líneas que declara el encabezado de la pantalla "
+                 "son los de la transcripción de arriba. Lo que cambia es la corrida, y "
+                 "por eso difieren el PID, el RSS y el %CPU máximo, que aquí llega a "
+                 + FIG_OBSERVACION_PCPU + " frente a los " + d["pcpu_max"]
+                 + " transcritos. Coincide en lo que importa: " + d["nlwp"] + " hilos "
+                 "vivos, %CPU por encima de 100 y el mismo du -sh de "
+                 + d["du_proyecto"] + " del proyecto.", texto_pt=7.0))
 
     b.append(h2("memoria_fs",
-                "Memoria del sistema, espacio disponible y tamano del proyecto"))
+                "Memoria del sistema, espacio disponible y tamaño del proyecto"))
     mem = d["free_h"].splitlines()[1].split()
     dfr = d["df_raiz"].split()
     b.append(code("$ free -h ; df -h / ; du -sh ~/solemne_so_equipo07",
@@ -1772,71 +1906,71 @@ def construir_documento(d, imgs_hv):
                   + "Filesystem      Size  Used Avail Use% Mounted on\n" + d["df_raiz"]
                   + "\n\n" + d["du_proyecto"] + "\t" + RUTA_PROYECTO_VM))
     b.append(p(
-        "La maquina tiene " + mem[1] + " de memoria total, con " + mem[2] + " en uso y "
+        "La máquina tiene " + mem[1] + " de memoria total, con " + mem[2] + " en uso y "
         + mem[3] + " libres. La columna buff/cache (" + mem[5] + ") no es memoria perdida "
-        "sino cache de disco que el nucleo devuelve en cuanto un proceso la necesita, y "
+        "sino caché de disco que el núcleo devuelve en cuanto un proceso la necesita, y "
         "por eso la disponible (" + mem[6] + ") supera a la libre; el intercambio queda en "
-        "0 B usados, senal de que el trabajo nunca presiono la memoria fisica. El proyecto "
+        "0 B usados, señal de que el trabajo nunca presionó la memoria física. El proyecto "
         "vive en " + dfr[0] + " montado en /, con " + dfr[1] + " de capacidad, " + dfr[2]
         + " usados y " + dfr[3] + " disponibles (" + dfr[4] + " de uso), y ocupa "
         + d["du_proyecto"] + "; ese total supera la suma de sus subcarpetas por el "
         "redondeo de du a bloques de " + d["stat_ioblock"] + " bytes."))
 
-    b.append(h2("stat", "Metadatos de la bitacora con stat"))
+    b.append(h2("stat", "Metadatos de la bitácora con stat"))
     b.append(code("$ stat logs/gestion_ambiental.log ; ls -lah logs/gestion_ambiental.log",
                   d["stat_bitacora"] + "\n" + d["ls_bitacora"]))
     b.append(tabla(
         ["Campo de stat", "Valor", "Lectura"],
-        [["Tipo y tamano",
+        [["Tipo y tamaño",
           "regular file, " + d["stat_size"] + " B en " + d["stat_bloques"] + " bloques",
-          "Archivo ordinario de datos. El tamano logico es menor que el espacio "
+          "Archivo ordinario de datos. El tamaño lógico es menor que el espacio "
           "reservado, porque el sistema de archivos asigna bloques completos de "
           + d["stat_ioblock"] + " bytes."],
          ["Inodo y enlaces",
           d["stat_inodo"] + " (dispositivo " + d["stat_dispositivo"] + "), "
           + d["stat_enlaces"] + " enlace",
-          "El nombre gestion_ambiental.log es solo una entrada de directorio que apunta a "
-          "ese inodo. Un enlace duro subiria el contador a 2 sin duplicar un byte."],
+          "El nombre gestion_ambiental.log es sólo una entrada de directorio que apunta a "
+          "ese inodo. Un enlace duro subiría el contador a 2 sin duplicar un byte."],
          ["Permisos", d["stat_permisos"],
-          "Lectura y escritura para el propietario y su grupo, solo lectura para el "
-          "resto: la bitacora es auditable por terceros pero no modificable."],
+          "Lectura y escritura para el propietario y su grupo, sólo lectura para el "
+          "resto: la bitácora es auditable por terceros pero no modificable."],
          ["Propietario / grupo", d["stat_uid"] + " / " + d["stat_gid"],
           "Pertenece al usuario sin privilegios del equipo, no a root: el gestor no "
           "necesita permisos elevados para operar."],
          ["Access / Modify / Change / Birth", "iguales al segundo",
-          "Ultima lectura, ultima escritura de contenido, ultimo cambio de metadatos del "
-          "inodo y creacion: coinciden porque el archivo se creo y se escribio en la "
+          "Última lectura, última escritura de contenido, último cambio de metadatos del "
+          "inodo y creación: coinciden porque el archivo se creó y se escribió en la "
           "misma corrida."]],
         anchos=[3.0, 3.9, 9.6]))
     b.append(p(
-        "Esa bitacora tiene " + d["ev_n_bitacora"] + " lineas y " + d["stat_size"]
+        "Esa bitácora tiene " + d["ev_n_bitacora"] + " líneas y " + d["stat_size"]
         + " bytes. Ambas cifras corresponden a la misma corrida: el generador de este "
-        "informe compara el conteo de lineas del archivo entregado con el que declara la "
-        "evidencia, y el tamano del archivo entregado con el que devolvio stat, y se "
+        "informe compara el conteo de líneas del archivo entregado con el que declara la "
+        "evidencia, y el tamaño del archivo entregado con el que devolvió stat, y se "
         "detiene si alguno de los dos pares no calza."))
 
     # ---------------------------------------- 7. Mover vs copiar y errores
     b.append(h1("mover", "Mover frente a copiar, y control de errores"))
 
-    b.append(h2("mover_copiar", "Por que los informes se mueven y el resumen se copia"))
+    b.append(h2("mover_copiar", "Por qué los informes se mueven y el resumen se copia"))
     b.append(p(
-        "Los informes se MUEVEN desde salida/ a su carpeta de clasificacion porque el "
+        "Los informes se MUEVEN desde salida/ a su carpeta de clasificación porque el "
         "traslado es un cambio de estado definitivo: un informe ya clasificado no debe "
-        "seguir figurando como pendiente. Copiarlos duplicaria cada informe y se perderia "
-        "la propiedad mas util: que salida/ sin informes significa \"no queda nada por "
+        "seguir figurando como pendiente. Copiarlos duplicaría cada informe y se perdería "
+        "la propiedad más útil: que salida/ sin informes significa \"no queda nada por "
         "clasificar\"."))
     b.append(p(
-        "Mover dentro de una misma particion (aqui origen y destino estan ambos en "
+        "Mover dentro de una misma partición (aquí origen y destino están ambos en "
         + dfr[0] + ") es la llamada rename(2): no copia datos, elimina la entrada de "
         "directorio antigua y crea otra que apunta al MISMO inodo. Los bloques no se "
-        "tocan, el numero de inodo no cambia y solo se actualiza el ctime; por eso es casi "
-        "instantanea y su costo no depende del tamano. Entre particiones distintas el "
-        "nucleo no podria renombrar y shutil.move degradaria a copiar y borrar."))
+        "tocan, el número de inodo no cambia y sólo se actualiza el ctime; por eso es casi "
+        "instantánea y su costo no depende del tamaño. Entre particiones distintas el "
+        "núcleo no podría renombrar y shutil.move degradaría a copiar y borrar."))
     b.append(p(
-        "El resumen consolidado tiene otro papel: es la vista general que el modulo de "
+        "El resumen consolidado tiene otro papel: es la vista general que el módulo de "
         "monitoreo consulta en su ruta de siempre. Por eso salida/resumen_ambiental.txt se "
-        "CONSERVA y ademas se COPIA como gestion_ambiental/resumen_resguardado.txt con "
-        "shutil.copy. Copiar si crea un inodo nuevo, con su contenido en otros bloques: "
+        "CONSERVA y además se COPIA como gestion_ambiental/resumen_resguardado.txt con "
+        "shutil.copy. Copiar sí crea un inodo nuevo, con su contenido en otros bloques: "
         "desde ese momento los dos archivos son independientes y modificar uno no altera "
         "al otro, que es lo que se espera de un respaldo."))
     b.append(tabla(
@@ -1845,179 +1979,189 @@ def construir_documento(d, imgs_hv):
          ["Efecto en el inodo", "conserva el mismo inodo", "crea un inodo nuevo"],
          ["Datos en disco", "no se duplican", "se duplican"],
          ["Original", "deja de existir en el origen", "permanece en salida/"],
-         ["Proposito", "reclasificacion definitiva", "respaldo y auditoria"]],
+         ["Propósito", "reclasificación definitiva", "respaldo y auditoría"]],
         anchos=[3.6, 6.5, 6.4]))
     b.append(code("# Comprobacion posterior a la ejecucion del gestor", d["mover_copiar"]))
     b.append(p(
         "El resumen original (" + str(d["resumen_bytes"]) + " bytes) sigue en salida/, la "
         "copia resguardada pesa " + str(d["resguardo_bytes"]) + " bytes y su contenido es "
-        "identico byte a byte: "
+        "idéntico byte a byte: "
         + ("comprobado" if d["resguardo_identico"] else "NO coincide") + ". En salida/ "
         "quedan " + str(d["n_salida"]) + " informes individuales, porque todos fueron "
         "movidos y no copiados; esto es lo que documenta " + ref("leeme") + "."))
 
     b.append(h2("errores", "Control de errores sin detener el procesamiento"))
     b.append(nota(
-        "Esta demostracion es DESTRUCTIVA: inyecta datos danados. Por eso NO se ejecuto "
-        "sobre el arbol entregado sino sobre una COPIA completa en " + d["copia_control"]
-        + ". De ahi que la bitacora entregada cierre con \"no se detectaron anomalias en "
+        "Esta demostración es DESTRUCTIVA: inyecta datos dañados. Por eso NO se ejecutó "
+        "sobre el árbol entregado sino sobre una COPIA completa en " + d["copia_control"]
+        + ". De ahí que la bitácora entregada cierre con \"no se detectaron anomalias en "
         "esta corrida\": el entregable viene de una corrida limpia y las cifras de esta "
-        "subseccion pertenecen a la copia."))
+        "subsección pertenecen a la copia."))
     b.append(p(
         "El requisito 13 pide controlar al menos un error sin detener el procesamiento. "
-        "Se inyectaron cuatro fallas distintas, para probar tanto el analisis de la "
-        "bitacora de alertas como la lectura de los informes: una linea sin separadores, "
+        "Se inyectaron cuatro fallas distintas, para probar tanto el análisis de la "
+        "bitácora de alertas como la lectura de los informes: una línea sin separadores, "
         "otra con campos insuficientes, un indicador desconocido (\"Radiacion\") y un "
-        "informe sin la linea \"Alertas detectadas: N\"."))
+        "informe sin la línea \"Alertas detectadas: N\"."))
     b.append(code("$ python3 src/gestor_incidencias.py ; echo \"Codigo de salida: $?\"\n"
                   "$ grep 'ANOMALIA\\|CONTROL DE ERRORES' logs/gestion_ambiental.log",
                   "Codigo de salida: " + d["gestor_exit_error"] + "\n\n"
                   + "\n".join(d["anomalias_lineas"][:4]) + "\n" + d["control_errores"]))
     b.append(p(
-        "El comportamiento es el correcto: las " + d["anomalias_total"] + " anomalias "
-        "quedaron registradas con su numero de linea y su contenido, el gestor NO se "
-        "detuvo, termino con codigo " + d["gestor_exit_error"] + ", conservo las "
-        + d["inventario_tras_error"] + " alertas validas y genero el inventario igual. "
-        "Descartar el dato defectuoso y continuar es preferible a abortar: una linea "
+        "El comportamiento es el correcto: las " + d["anomalias_total"] + " anomalías "
+        "quedaron registradas con su número de línea y su contenido, el gestor NO se "
+        "detuvo, terminó con código " + d["gestor_exit_error"] + ", conservó las "
+        + d["inventario_tras_error"] + " alertas válidas y generó el inventario igual. "
+        "Descartar el dato defectuoso y continuar es preferible a abortar: una línea "
         "corrupta no puede invalidar una jornada de monitoreo, pero tampoco puede "
         "desaparecer en silencio."))
+    # Pie honesto: la captura NO corresponde a la corrida de cuatro fallas que
+    # se transcribe arriba, sino a otra de control con dos alertas danadas. Su
+    # ultima linea queda cortada por el borde de la consola y NO figura en
+    # evidencias/debian/06-control-de-errores.txt, que registra la otra corrida
+    # (cuatro anomalias, otra marca de tiempo): remitir alli era mandar al
+    # lector a una comprobacion que falla. Lo que la captura si demuestra esta
+    # completo en sus propias lineas anteriores, y eso es lo que declara el pie.
     b.append(fig(recortar_consola(FOTOS / "debian-04-stat-y-control-de-errores.png"),
-                 "Metadatos de la bitacora con stat y evidencia del control de "
-                 "errores en la consola de la maquina virtual. La captura corresponde a "
-                 "una corrida de control anterior, con dos alertas danadas en vez de las "
-                 "cuatro fallas transcritas arriba; por eso declara dos anomalias y otro "
-                 "tamano de bitacora. El resultado es el mismo: registra cada anomalia, no "
-                 "se detiene, termina con codigo " + d["gestor_exit_error"] + " y completa "
-                 "el inventario con las " + d["inventario_tras_error"] + " alertas. La "
-                 "ultima linea queda cortada por el borde de la consola; su texto completo "
-                 "esta en evidencias/debian/06-control-de-errores.txt."))
+                 "Metadatos de la bitácora con stat y control de errores en la consola "
+                 "de la máquina virtual. Arriba, el stat del archivo entregado: los "
+                 "mismos " + d["stat_size"] + " bytes e inodo " + d["stat_inodo"]
+                 + " que transcribe " + ref("stat") + ". Abajo, una corrida de control "
+                 "DISTINTA de la de " + ref("errores") + ", con dos alertas dañadas en "
+                 "vez de cuatro fallas; sus líneas legibles ya dan el resultado completo "
+                 "(código " + d["gestor_exit_error"] + ", dos anomalías y "
+                 + d["inventario_tras_error"] + " alertas conservadas). La última línea, "
+                 "el resumen CONTROL DE ERRORES de esa misma corrida, es la que corta el "
+                 "borde de la consola: no está transcrita en ninguna evidencia, porque la "
+                 "corrida archivada en evidencias/debian/06-control-de-errores.txt es la "
+                 "otra.", texto_pt=7.0))
 
-    b.append(h2("anti", "Idempotencia y proteccion contra sobrescritura"))
+    b.append(h2("anti", "Idempotencia y protección contra sobrescritura"))
     b.append(nota(
-        "Esta demostracion tambien es destructiva, porque duplica informes a proposito, y "
-        "por eso se ejecuto sobre la misma COPIA " + d["copia_anti"] + ". El arbol "
+        "Esta demostración también es destructiva, porque duplica informes a propósito, y "
+        "por eso se ejecutó sobre la misma COPIA " + d["copia_anti"] + ". El árbol "
         "entregado conserva sus " + str(inv["resumen"]["total_informes"]) + " informes "
-        "sin sufijos de version, que es el estado de una unica corrida limpia."))
+        "sin sufijos de versión, que es el estado de una única corrida limpia."))
     b.append(code("# Tres corridas consecutivas del gestor sobre la copia\n"
                   "$ ls -lah gestion_ambiental/criticas/informe_STG04_20240101*",
                   d["idempotencia"] + "\n\n" + d["ejemplo_versiones"]))
     b.append(p(
         "Las alertas no se duplican entre corridas porque los registros por indicador se "
-        "reconstruyen de forma atomica sobre archivos temporales que se renombran al "
+        "reconstruyen de forma atómica sobre archivos temporales que se renombran al "
         "final. Al reprocesar, los informes ya clasificados no se pierden ni se pisan: "
         "obtener_nombre_seguro() comprueba la existencia del destino y agrega un sufijo "
         "correlativo. Partiendo de " + d["informes_iniciales_v"] + " informes, tras dos "
         "ciclos adicionales conviven " + d["encontrados_v"] + " donde se esperaban "
-        + d["esperados_v"] + " (" + d["con_sufijo_v"] + " con sufijo): ningun archivo fue "
+        + d["esperados_v"] + " (" + d["con_sufijo_v"] + " con sufijo): ningún archivo fue "
         "sobrescrito ni eliminado."))
 
     # ------------------------------------------------------ 8. Conclusiones
     b.append(h1("conclusiones", "Conclusiones"))
 
     b.append(h2("concurrencia",
-                "Sobre concurrencia: el resultado que no favorece la hipotesis"))
+                "Sobre concurrencia: el resultado que no favorece la hipótesis"))
     b.append(p(
-        "La conclusion mas importante es tambien la mas incomoda: en este caso concreto "
-        "la concurrencia NO acelero el procesamiento. La version concurrente tardo "
+        "La conclusión más importante es también la más incómoda: en este caso concreto "
+        "la concurrencia NO aceleró el procesamiento. La versión concurrente tardó "
         + d["t_con"]["real"] + " frente a " + d["t_sec"]["real"] + " de la secuencial, y "
         "su tiempo interno fue " + d["t_con"]["interno"] + " s frente a "
         + d["t_sec"]["interno"] + " s. El dato no se maquilla, se explica:"))
     b.append(ul([
-        "El trabajo util es demasiado pequeno: " + d["archivos_generados"]
-        + " archivos con " + res["Lineas leidas"] + " lineas, procesados en centesimas de "
+        "El trabajo útil es demasiado pequeño: " + d["archivos_generados"]
+        + " archivos con " + res["Lineas leidas"] + " líneas, procesados en centésimas de "
         "segundo.",
-        "El costo fijo de la concurrencia no depende del tamano del trabajo: crear "
+        "El costo fijo de la concurrencia no depende del tamaño del trabajo: crear "
         + d["t_con"]["trabajadores"] + " hilos, encolar los archivos y tomar y soltar los "
-        "mutex en cada actualizacion pesa mas que lo que se ahorra al repartir un trabajo "
+        "mutex en cada actualización pesa más que lo que se ahorra al repartir un trabajo "
         "tan breve.",
-        "El trabajo esta dominado por entrada/salida sobre archivos diminutos que el "
-        "nucleo ya tiene en cache, de modo que hay poca espera que solapar; y en CPython "
-        "el bloqueo global del interprete impide que dos hilos ejecuten codigo Python puro "
+        "El trabajo está dominado por entrada/salida sobre archivos diminutos que el "
+        "núcleo ya tiene en caché, de modo que hay poca espera que solapar; y en CPython "
+        "el bloqueo global del intérprete impide que dos hilos ejecuten código Python puro "
         "a la vez.",
     ]))
     b.append(p(
-        "La concurrencia si se observa cuando el trabajo crece: con la carga amplificada "
-        "de " + d["carga_archivos"] + " archivos el proceso alcanzo " + d["pcpu_max"]
-        + " % de CPU, por encima del 100 % que jamas superaria un proceso de un solo hilo. "
+        "La concurrencia sí se observa cuando el trabajo crece: con la carga amplificada "
+        "de " + d["carga_archivos"] + " archivos el proceso alcanzó " + d["pcpu_max"]
+        + " % de CPU, por encima del 100 % que jamás superaría un proceso de un solo hilo. "
         "El mecanismo funciona; lo que falta en el conjunto oficial es trabajo suficiente "
         "para amortizar su costo de entrada."))
 
-    b.append(h2("sincronizacion", "Sobre sincronizacion y sistema de archivos"))
+    b.append(h2("sincronizacion", "Sobre sincronización y sistema de archivos"))
     b.append(p(
-        "Que las " + d["metricas_comparadas"] + " metricas coincidan y que los "
-        + d["informes_comparados"] + " informes sean identicos es la evidencia de que la "
-        "sincronizacion es correcta: con " + d["t_con"]["trabajadores"] + " hilos "
-        "actualizando contadores compartidos, sin mutex cada corrida habria dado un "
-        "resultado distinto. El patron fue acumular en variables locales y entrar a la "
-        "seccion critica una sola vez por archivo; queue.Queue garantiza que cada archivo "
-        "lo toma un unico trabajador. El unico efecto observable de la concurrencia es el "
-        "ORDEN de las lineas de la bitacora."))
+        "Que las " + d["metricas_comparadas"] + " métricas coincidan y que los "
+        + d["informes_comparados"] + " informes sean idénticos es la evidencia de que la "
+        "sincronización es correcta: con " + d["t_con"]["trabajadores"] + " hilos "
+        "actualizando contadores compartidos, sin mutex cada corrida habría dado un "
+        "resultado distinto. El patrón fue acumular en variables locales y entrar a la "
+        "sección crítica una sola vez por archivo; queue.Queue garantiza que cada archivo "
+        "lo toma un único trabajador. El único efecto observable de la concurrencia es el "
+        "ORDEN de las líneas de la bitácora."))
     b.append(p(
-        "Mover y copiar obligo a distinguir el nombre de un archivo del archivo mismo: un "
+        "Mover y copiar obligó a distinguir el nombre de un archivo del archivo mismo: un "
         "nombre es una entrada de directorio que apunta a un inodo. Las herramientas "
         "completaron el cuadro: stat dio inodo, enlaces, permisos y marcas de tiempo; "
-        "ls -lah y du -sh, la diferencia entre tamano logico y bloques ocupados; df -h, el "
-        "sistema de archivos y su espacio libre; free -h, que la cache no es memoria "
+        "ls -lah y du -sh, la diferencia entre tamaño lógico y bloques ocupados; df -h, el "
+        "sistema de archivos y su espacio libre; free -h, que la caché no es memoria "
         "perdida; y ps con /proc, la estructura interna del proceso."))
 
-    b.append(h2("honestidad", "Declaraciones de honestidad tecnica"))
+    b.append(h2("honestidad", "Declaraciones de honestidad técnica"))
     b.append(ul([
-        "Hipervisor: el hito declaro " + HIPERVISOR_PLANIFICADO + " y la implementacion "
+        "Hipervisor: el hito declaró " + HIPERVISOR_PLANIFICADO + " y la implementación "
         "final se hizo sobre " + hv["hipervisor_implementado"] + ", con los recursos "
         "comprometidos intactos; la pauta admite otro hipervisor. TODAS las figuras de "
-        "instalacion son de la maquina real en Hyper-V; la etapa previa sobre "
-        + HIPERVISOR_PLANIFICADO + " queda archivada, no presentada como evidencia de la "
-        "maquina entregada.",
-        "Rendimiento: la version concurrente resulto mas lenta que la secuencial en el "
-        "conjunto oficial; se informa tal como se midio.",
-        "Clasificacion: sin_alertas/ quedo con " + str(d["n_sin"]) + " informes porque la "
-        "pauta exige al menos una alerta por archivo; la rama se demostro aparte.",
+        "instalación son de la máquina real en Hyper-V: de la etapa previa sobre "
+        + HIPERVISOR_PLANIFICADO + " no se conserva ninguna captura en el entregable, "
+        "porque no correspondía a la máquina entregada.",
+        "Rendimiento: la versión concurrente resultó más lenta que la secuencial en el "
+        "conjunto oficial; se informa tal como se midió.",
+        "Clasificación: sin_alertas/ quedó con " + str(d["n_sin"]) + " informes porque la "
+        "pauta exige al menos una alerta por archivo; la rama se demostró aparte.",
         "Demostraciones destructivas: el control de errores (" + ref("errores") + ") y la "
         "anti-sobrescritura (" + ref("anti") + ") se ejecutaron sobre una COPIA, no sobre "
-        "el arbol entregado; por eso la bitacora entregada no registra esas anomalias.",
+        "el árbol entregado; por eso la bitácora entregada no registra esas anomalías.",
         "Trazabilidad: cada cifra se lee al generar el informe desde evidencias/ y del "
         "estado real del proyecto, y el generador compara ambas fuentes -y las cifras del "
         "README- antes de escribir nada; si discrepan, no se emite el documento.",
     ]))
 
-    b.append(h2("indice", "Indice de evidencias que respaldan este informe"))
+    b.append(h2("indice", "Índice de evidencias que respaldan este informe"))
     b.append(p(
-        "Cada seccion puede auditarse contra el archivo que la origina; el generador "
+        "Cada sección puede auditarse contra el archivo que la origina; el generador "
         "falla si alguno cambia de forma incompatible."))
     b.append(tabla(
         ["Archivo de evidencia", "Contenido", "Secciones"],
         [["evidencias/hyperv/configuracion-vm-hyperv.txt",
-          "cmdlets de Hyper-V y verificacion SHA256 del ISO",
+          "cmdlets de Hyper-V y verificación SHA256 del ISO",
           ref("iso") + ", " + ref("hipervisor")],
          ["evidencias/debian/01-preparar-ambiente.txt",
           "apt update, apt upgrade y entorno de Python", ref("ambiente")],
          ["evidencias/debian/02-entorno.txt",
-          "distribucion, kernel, hipervisor, CPU, memoria, disco y red",
+          "distribución, kernel, hipervisor, CPU, memoria, disco y red",
           ref("instalacion")],
          ["evidencias/debian/03-ejecucion-parte1.txt",
-          "ambas corridas, las seis metricas y la comparacion de informes y alertas",
+          "ambas corridas, las seis métricas y la comparación de informes y alertas",
           ref("parte1")],
          ["evidencias/debian/04-observacion-procesos.txt",
           "/usr/bin/time -v, ps, ps -L, /proc, free -h, df -h y du -sh", ref("procesos")],
          ["evidencias/debian/05-gestor-incidencias.txt",
-          "estructura, inventario, stat de la bitacora, mover frente a copiar",
+          "estructura, inventario, stat de la bitácora, mover frente a copiar",
           ref("gestor") + ", " + ref("mover_copiar")],
          ["evidencias/debian/06-control-de-errores.txt",
-          "anomalias inyectadas y rama sin_alertas (sobre una copia)",
+          "anomalías inyectadas y rama sin_alertas (sobre una copia)",
           ref("sin_alertas") + ", " + ref("errores")],
          ["evidencias/debian/07-anti-sobrescritura.txt",
           "sufijos _v1 y _v2 e idempotencia (sobre una copia)", ref("anti")],
          ["evidencias/salida_parte1/",
-          d["respaldo_parte1"] + " archivos: salida/ tal como la dejo la Parte 1",
+          d["respaldo_parte1"] + " archivos: salida/ tal como la dejó la Parte 1",
           ref("leeme")],
          ["evidencias/fotos/",
-          "instalacion real en Hyper-V y consola de la maquina definitiva",
+          "instalación real en Hyper-V y consola de la máquina definitiva",
           "Figuras 1 a %d" % n_figuras()],
          ["gestion_ambiental/, alertas/, logs/, salida/",
-          "estado real: informes, alertas por indicador, inventario y bitacora",
+          "estado real: informes, alertas por indicador, inventario y bitácora",
           ref("gestor") + ", " + ref("mover")],
          ["docs/Solemne01PracticaParte2FormaB.pdf",
-          "pauta oficial contra la cual se verifico cada requisito", "todas"]],
+          "pauta oficial contra la cual se verificó cada requisito", "todas"]],
         anchos=[6.4, 7.2, 2.9]))
 
     return b
@@ -2067,7 +2211,7 @@ def render_docx(bloques, destino):
         pie = section.footer.paragraphs[0]
         pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
         izq = pie.add_run(limpiar(EVALUACION + "  |  " + EQUIPO + "  |  "
-                                  + SECCION + "  |  Pagina "))
+                                  + SECCION + "  |  Página "))
         izq.font.size = Pt(8)
         izq.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
         num = campo(pie, " PAGE ")
@@ -2346,7 +2490,7 @@ def render_pdf(bloques, destino):
             canvas.drawString(2.0 * cm, 0.95 * cm,
                               limpiar(EVALUACION + "  |  " + EQUIPO + "  |  " + SECCION))
             canvas.drawRightString(A4[0] - 2.0 * cm, 0.95 * cm,
-                                   "Pagina %d" % doc_.page)
+                                   "Página %d" % doc_.page)
             canvas.setStrokeColor(colors.HexColor("#D1D5DB"))
             canvas.line(2.0 * cm, 1.3 * cm, A4[0] - 2.0 * cm, 1.3 * cm)
         canvas.restoreState()
@@ -2546,9 +2690,6 @@ def main():
     print("[generar_informe] Leyendo evidencia del repositorio...")
     datos = recolectar_datos()
     print("[generar_informe] Preparando capturas...")
-    # Las capturas de la etapa previa ya no ilustran ninguna figura, pero se
-    # siguen extrayendo y cacheando porque el informe las cita por su ruta.
-    extraer_capturas_instalacion()
     imgs_hv = capturas_instalacion_real()
     print("[generar_informe] Construyendo el documento...")
     bloques = construir_documento(datos, imgs_hv)

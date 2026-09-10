@@ -15,6 +15,18 @@ El proyecto implementa **dos versiones equivalentes** del mismo contrato de proc
 
 Ambas versiones producen **métricas idénticas** sobre el mismo conjunto de entrada.
 
+## Qué se entrega
+
+El **entregable central de la Parte 2 es el informe final**:
+`docs/Informe_Final_Parte2_Equipo07.pdf`, con su fuente editable
+`docs/Informe_Final_Parte2_Equipo07.docx`. Ambos se producen desde una única fuente de contenido
+con `scripts/generar_informe.py`, que **no escribe a mano ninguna cifra**: extrae las métricas, los
+tiempos, los conteos y los tamaños directamente de los archivos de `evidencias/debian/` en el
+momento de generar el documento.
+
+Este README es la **guía de reproducción** del código y el mapa de la evidencia: explica cómo
+volver a obtener exactamente los mismos números y dónde está cada archivo que los respalda.
+
 ## Identificación
 
 | Dato | Valor |
@@ -249,14 +261,15 @@ Solemne1/
 ├── alertas/
 │   └── alertas_detectadas.log              → bitácora plana de todas las alertas
 ├── docs/
+│   ├── Informe_Final_Parte2_Equipo07.pdf   → INFORME FINAL de la Parte 2 (entregable central)
+│   ├── Informe_Final_Parte2_Equipo07.docx  → misma fuente del informe, en formato editable
+│   ├── Solemne01PracticaParte01FormaB.pdf  → pauta oficial de la Parte 1
 │   ├── Solemne01PracticaParte2FormaB.pdf   → pauta oficial de la Parte 2
-│   ├── hito_parte2hp_equipo07.pdf          → hito presencial ya entregado
-│   └── revision_docs_parte2.md
+│   └── hito_parte2hp_equipo07.pdf          → hito presencial ya entregado
 ├── entrada/
 │   └── estacion_CODIGO_AAAAMMDD.jsonl      → 20 archivos de mediciones (JSONL)
 ├── evidencias/
 │   ├── comparacion_parte1.txt              → comparación secuencial vs concurrente
-│   ├── Parte 2 solemne Sistemas Operativos.pdf → capturas de instalación del equipo
 │   ├── debian/
 │   │   ├── 01-preparar-ambiente.txt        → apt update / upgrade y entorno Python
 │   │   ├── 02-entorno.txt                  → distribución, kernel, CPU, memoria, disco, red
@@ -269,12 +282,13 @@ Solemne1/
 │   │   ├── resumen_concurrente.txt         → resumen consolidado de la corrida concurrente
 │   │   ├── alertas_secuencial.log          → log de alertas de la corrida secuencial
 │   │   └── alertas_concurrente.log         → log de alertas de la corrida concurrente
+│   ├── fotos/
+│   │   ├── debian-01..04-*.png             → 4 capturas de la consola de la VM definitiva
+│   │   ├── instalacion-hyperv/01..05-*.png → 5 capturas de la instalación real en Hyper-V
+│   │   └── recortes/                       → recortes de esas 9 capturas, usados como figuras
+│   │                                         del informe final (más el marcador .version)
 │   ├── hyperv/
 │   │   └── configuracion-vm-hyperv.txt     → salida de los cmdlets Hyper-V y SHA256 de la ISO
-│   ├── fotos/
-│   │   ├── debian-01..04-*.png             → consola de la VM definitiva
-│   │   ├── instalacion-hyperv/01..05-*.png → instalación real de Debian 13 en Hyper-V
-│   │   └── instalacion/, recortes/         → capturas complementarias
 │   └── salida_parte1/                      → respaldo de los 20 informes + resumen (Parte 1)
 ├── gestion_ambiental/
 │   ├── alertas_por_indicador/
@@ -297,7 +311,8 @@ Solemne1/
 ├── scripts/
 │   ├── generar_archivos_entrada.py         → generador reproducible del conjunto de entrada
 │   ├── limpiar.py                          → deja el árbol en estado previo a la corrida
-│   └── generar_informe.py
+│   └── generar_informe.py                  → genera el informe final (.docx y .pdf) leyendo
+│                                             las cifras desde evidencias/debian/
 ├── src/
 │   ├── secuencial.py                       → versión secuencial
 │   ├── concurrente.py                      → versión concurrente (3 hilos)
@@ -529,9 +544,17 @@ sistema: `/dev/sda1` con 24 G totales, 1.2 G usados y 21 G disponibles (6 % de u
 > **copia** del proyecto, porque el conjunto oficial se procesa en milisegundos y `ps` no alcanza a
 > tomar una muestra útil. Se tomaron 270 muestras de `ps` con el proceso vivo. **Todas las métricas
 > entregables del proyecto provienen del conjunto oficial de 20 archivos.** El detalle completo
-> (PID, PPID, `STAT`, `%CPU` por sobre 100 % como prueba de trabajo simultáneo en varios núcleos
-> —las muestras van de 100 % a 103 %—, `NLWP` = 4 hilos, `ps -L` y `/proc/<PID>/status`) está en
+> (PID, PPID, `STAT`, `%CPU`, `NLWP` = 4 hilos, `ps -L` y `/proc/<PID>/status`) está en
 > `evidencias/debian/04-observacion-procesos.txt`.
+>
+> **Precisión sobre las muestras de `%CPU` transcritas.** No todas superan el 100 %, y no tendrían
+> por qué: `%CPU` en `ps` es un **promedio acumulado** desde que arrancó el proceso, así que sube a
+> medida que los hilos avanzan. Las muestras transcritas en
+> `evidencias/debian/04-observacion-procesos.txt` van de **0.0 % a 103 %**: la primera marca
+> `0.0 %` con `NLWP` = 1, tomada **antes** de que arrancaran los tres trabajadores, y hay otra de
+> `75.0 %` tomada ya con los cuatro hilos vivos. **Lo que prueba el trabajo simultáneo en varios
+> núcleos son las muestras que pasan del 100 %: 100 %, 102 % y 103 %**, imposibles para un proceso
+> que solo pudiera ocupar un núcleo.
 
 ### 7.4 Clasificación del gestor de incidencias
 
@@ -688,19 +711,39 @@ salida.
 | Observación de procesos | `evidencias/fotos/debian-02-observacion-procesos.png` |
 | Estructura generada por el gestor | `evidencias/fotos/debian-03-estructura-gestor.png` |
 | `stat` y control de errores | `evidencias/fotos/debian-04-stat-y-control-de-errores.png` |
-| Monitoreo de procesos concurrentes | `evidencias/fotos/Monitoreo de procesos concurrentes.png` |
-| Recursos del sistema | `evidencias/fotos/Recursos del sistema.png` |
-| Metadatos de la bitácora | `evidencias/fotos/Metadatos de la bitácora.png` |
 | Instalación real de Debian 13 en Hyper-V (menú del instalador, línea de arranque, instalación del sistema base, instalación final, primer inicio) | `evidencias/fotos/instalacion-hyperv/01-menu-instalador-debian13.png` … `05-primer-inicio.png` |
-| Capturas complementarias de instalación y recortes | `evidencias/fotos/instalacion/`, `evidencias/fotos/recortes/` |
-| Capturas de instalación previas del equipo | `evidencias/Parte 2 solemne Sistemas Operativos.pdf` |
+| Recortes de esas 9 capturas, tal como los inserta el informe final | `evidencias/fotos/recortes/` |
+
+Son **9 capturas en total**: 4 de la consola de la máquina definitiva y 5 de su instalación real en
+Hyper-V. `evidencias/fotos/recortes/` no aporta capturas nuevas: contiene el recorte de cada una de
+esas 9, generado por `scripts/generar_informe.py` para insertarlas como figuras del informe final
+sin los márgenes negros de la consola. El archivo `evidencias/fotos/recortes/.version` es el
+marcador de versión del algoritmo de recorte: si cambia, la caché se regenera.
+
+> **`evidencias/fotos/debian-02-observacion-procesos.png` es de una corrida distinta.** Esa captura
+> y la transcripción de `evidencias/debian/04-observacion-procesos.txt` documentan **la misma
+> observación con la misma carga amplificada de 4000 archivos y 64 000 líneas, pero en dos
+> ejecuciones separadas**. Por eso sus números **no coinciden uno a uno y no deberían hacerlo**: la
+> foto muestra el PID 12199 y un `%CPU` máximo de 107 %, mientras que el archivo de texto muestra el
+> PID 10043 y un máximo de 103 %. Lo que ambas prueban es lo mismo —4 hilos vivos (`NLWP` = 4) y
+> `%CPU` por sobre 100 %—, y coinciden en lo que no depende de la corrida: 624K de proyecto en disco
+> y `/dev/sda1` con 24 G, 1.2 G usados y 21 G disponibles. **Los valores que este README declara son
+> siempre los del archivo de texto**, no los de la foto.
 
 ### Documentación
 
 | Documento | Archivo |
 |-----------|---------|
+| **Informe final de la Parte 2 (entregable central)** | `docs/Informe_Final_Parte2_Equipo07.pdf` |
+| Fuente editable del informe final | `docs/Informe_Final_Parte2_Equipo07.docx` |
+| Generador reproducible del informe final | `scripts/generar_informe.py` |
+| Pauta oficial de la Parte 1 | `docs/Solemne01PracticaParte01FormaB.pdf` |
 | Pauta oficial de la Parte 2 | `docs/Solemne01PracticaParte2FormaB.pdf` |
 | Hito presencial ya entregado | `docs/hito_parte2hp_equipo07.pdf` |
+
+El informe final no se redacta a mano: `scripts/generar_informe.py` lo arma desde una sola fuente de
+contenido y **lee cada cifra de los archivos de `evidencias/debian/`** en el momento de generarlo,
+de modo que el informe, este README y la evidencia no puedan divergir.
 
 ---
 
