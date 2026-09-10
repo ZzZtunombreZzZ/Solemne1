@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "CON03", "temperatura": 17.88, "humedad": 67.98, "pm25": 10.91, "ruido_db": 50.41}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "CON03", "temperatura": 22.58, "humedad": 60.14, "pm25": 28.74, "ruido_db": 42.73}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "CON03", "temperatura": 17.53, "humedad": 64.91, "pm25": 9.75, "ruido_db": 59.17}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "CON03", "temperatura": 10.95, "humedad": 25.89, "pm25": 8.76, "ruido_db": 61.24}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "CON03", "temperatura": 29.79, "humedad": 25.64, "pm25": 21.53, "ruido_db": 35.72}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "CON03", "temperatura": 11.55, "humedad": 71.14, "pm25": 28.54, "ruido_db": 56.16}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "CON03", "temperatura": 11.14, "humedad": 49.13, "pm25": 6.75, "ruido_db": 60.06}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "CON03", "temperatura": 26.66, "humedad": 42.11, "pm25": 8.05, "ruido_db": 65.93}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "CON03", "temperatura": 31.24, "humedad": 34.75, "pm25": 7.22, "ruido_db": 35.0}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "CON03", "temperatura": 30.55, "humedad": 33.58, "pm25": 24.24, "ruido_db": 51.84}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "CON03", "temperatura": 16.76, "humedad": 86.35, "pm25": 23.88, "ruido_db": 64.41}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "CON03", "temperatura": 15.5, "humedad": 84.6, "pm25": 19.42, "ruido_db": 58.8}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "CON03", "temperatura": 27.67, "humedad": 82.87, "pm25": 123.73, "ruido_db": 60.16}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "CON03", "temperatura": 18.34, "humedad": 36.05, "pm25": 29.63, "ruido_db": 95.22}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "CON03", "temperatura": 47.84, "humedad": 66.08, "pm25": 7.92, "ruido_db": 55.57}
+{"timestamp": "2024-01-01T21:45:15", "estacion": CON03, "temperatura": 

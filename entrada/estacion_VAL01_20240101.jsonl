@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "VAL01", "temperatura": 10.73, "humedad": 69.82, "pm25": 10.66, "ruido_db": 59.28}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "VAL01", "temperatura": 24.21, "humedad": 74.85, "pm25": 11.62, "ruido_db": 36.71}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "VAL01", "temperatura": 16.57, "humedad": 25.53, "pm25": 14.13, "ruido_db": 42.25}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "VAL01", "temperatura": 23.68, "humedad": 73.88, "pm25": 3.52, "ruido_db": 37.48}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "VAL01", "temperatura": 21.92, "humedad": 86.27, "pm25": 19.58, "ruido_db": 61.36}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "VAL01", "temperatura": 33.56, "humedad": 60.64, "pm25": 9.36, "ruido_db": 53.58}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "VAL01", "temperatura": 24.19, "humedad": 60.57, "pm25": 8.71, "ruido_db": 40.6}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "VAL01", "temperatura": 26.45, "humedad": 45.38, "pm25": 15.69, "ruido_db": 65.75}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "VAL01", "temperatura": 13.63, "humedad": 63.98, "pm25": 10.22, "ruido_db": 47.87}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "VAL01", "temperatura": 12.71, "humedad": 72.98, "pm25": 18.8, "ruido_db": 59.71}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "VAL01", "temperatura": 20.48, "humedad": 72.21, "pm25": 22.78, "ruido_db": 36.74}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "VAL01", "temperatura": 13.23, "humedad": 48.34, "pm25": 16.22, "ruido_db": 46.45}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "VAL01", "temperatura": 45.6, "humedad": 65.91, "pm25": 8.11, "ruido_db": 60.14}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "VAL01", "temperatura": 12.62, "humedad": 15.44, "pm25": 25.13, "ruido_db": 58.69}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "VAL01", "temperatura": 17.69, "humedad": 34.92, "pm25": 177.87, "ruido_db": 62.35}
+{"timestamp": "2024-01-01T21:45:15", "estacion": "VAL01", "temperatura": "25.5", "humedad": 55.0, "pm25": 12.0, "ruido_db": 48.0}

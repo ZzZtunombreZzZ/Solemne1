@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "VAL02", "temperatura": 19.66, "humedad": 49.05, "pm25": 17.95, "ruido_db": 42.67}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "VAL02", "temperatura": 28.93, "humedad": 50.6, "pm25": 8.5, "ruido_db": 45.39}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "VAL02", "temperatura": 27.99, "humedad": 72.78, "pm25": 28.31, "ruido_db": 40.51}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "VAL02", "temperatura": 23.05, "humedad": 81.05, "pm25": 5.87, "ruido_db": 36.16}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "VAL02", "temperatura": 32.02, "humedad": 86.97, "pm25": 18.27, "ruido_db": 51.84}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "VAL02", "temperatura": 17.62, "humedad": 76.33, "pm25": 10.12, "ruido_db": 51.14}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "VAL02", "temperatura": 27.78, "humedad": 43.11, "pm25": 22.91, "ruido_db": 38.64}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "VAL02", "temperatura": 12.68, "humedad": 78.6, "pm25": 11.53, "ruido_db": 45.42}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "VAL02", "temperatura": 26.93, "humedad": 26.96, "pm25": 4.64, "ruido_db": 66.91}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "VAL02", "temperatura": 12.46, "humedad": 32.36, "pm25": 13.39, "ruido_db": 44.15}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "VAL02", "temperatura": 32.13, "humedad": 54.19, "pm25": 10.39, "ruido_db": 54.99}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "VAL02", "temperatura": 23.99, "humedad": 52.65, "pm25": 10.61, "ruido_db": 58.94}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "VAL02", "temperatura": 11.0, "humedad": 9.76, "pm25": 9.61, "ruido_db": 35.12}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "VAL02", "temperatura": 21.98, "humedad": 32.79, "pm25": 146.55, "ruido_db": 96.11}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "VAL02", "temperatura": 17.23, "humedad": 79.16, "pm25": 13.89, "ruido_db": 90.39}
+{"timestamp": "2024-01-01T21:45:15", "estacion": VAL02, "temperatura": 

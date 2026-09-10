@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "STG01", "temperatura": 15.76, "humedad": 51.24, "pm25": 22.33, "ruido_db": 35.9}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "STG01", "temperatura": 12.88, "humedad": 62.83, "pm25": 24.05, "ruido_db": 54.34}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "STG01", "temperatura": 15.22, "humedad": 81.67, "pm25": 25.22, "ruido_db": 58.44}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "STG01", "temperatura": 22.05, "humedad": 52.02, "pm25": 11.57, "ruido_db": 38.13}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "STG01", "temperatura": 24.16, "humedad": 66.73, "pm25": 20.4, "ruido_db": 62.37}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "STG01", "temperatura": 23.71, "humedad": 64.24, "pm25": 12.93, "ruido_db": 47.82}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "STG01", "temperatura": 24.11, "humedad": 78.09, "pm25": 27.23, "ruido_db": 64.56}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "STG01", "temperatura": 24.08, "humedad": 25.16, "pm25": 5.77, "ruido_db": 51.52}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "STG01", "temperatura": 28.73, "humedad": 65.22, "pm25": 7.32, "ruido_db": 64.9}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "STG01", "temperatura": 23.49, "humedad": 41.06, "pm25": 7.2, "ruido_db": 40.86}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "STG01", "temperatura": 15.11, "humedad": 77.23, "pm25": 6.83, "ruido_db": 51.21}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "STG01", "temperatura": 27.66, "humedad": 29.95, "pm25": 18.31, "ruido_db": 66.93}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "STG01", "temperatura": 31.21, "humedad": 25.27, "pm25": 28.45, "ruido_db": 55.09}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "STG01", "temperatura": 10.54, "humedad": 87.95, "pm25": 16.49, "ruido_db": 57.68}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "STG01", "temperatura": 43.02, "humedad": 59.69, "pm25": 10.49, "ruido_db": 35.69}
+{"timestamp": "2024-01-01T21:45:15", "estacion": STG01, "temperatura": 

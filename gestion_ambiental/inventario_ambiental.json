@@ -1,5 +1,105 @@
 {
-    "sin_alertas": 0,
-    "con_alertas": 0,
-    "criticas": 20
+    "resumen": {
+        "total_informes": 20,
+        "informes_por_categoria": {
+            "sin_alertas": 0,
+            "con_alertas": 8,
+            "criticas": 12
+        },
+        "total_alertas": 79,
+        "anomalias_registradas": 0,
+        "errores_de_proceso": 0
+    },
+    "informes": {
+        "sin_alertas": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "con_alertas": {
+            "cantidad": 8,
+            "archivos": [
+                "informe_CON01_20240101.txt",
+                "informe_CON03_20240101.txt",
+                "informe_PUN01_20240101.txt",
+                "informe_PUN03_20240101.txt",
+                "informe_STG01_20240101.txt",
+                "informe_STG03_20240101.txt",
+                "informe_VAL01_20240101.txt",
+                "informe_VAL03_20240101.txt"
+            ]
+        },
+        "criticas": {
+            "cantidad": 12,
+            "archivos": [
+                "informe_CON02_20240101.txt",
+                "informe_CON04_20240101.txt",
+                "informe_PUN02_20240101.txt",
+                "informe_PUN04_20240101.txt",
+                "informe_STG01_20240102.txt",
+                "informe_STG02_20240101.txt",
+                "informe_STG02_20240102.txt",
+                "informe_STG03_20240102.txt",
+                "informe_STG04_20240101.txt",
+                "informe_STG04_20240102.txt",
+                "informe_VAL02_20240101.txt",
+                "informe_VAL04_20240101.txt"
+            ]
+        }
+    },
+    "alertas_por_indicador": {
+        "temperatura": {
+            "cantidad": 21,
+            "log": "gestion_ambiental/alertas_por_indicador/temperatura/alertas_temperatura.log"
+        },
+        "humedad": {
+            "cantidad": 17,
+            "log": "gestion_ambiental/alertas_por_indicador/humedad/alertas_humedad.log"
+        },
+        "pm25": {
+            "cantidad": 20,
+            "log": "gestion_ambiental/alertas_por_indicador/pm25/alertas_pm25.log"
+        },
+        "ruido": {
+            "cantidad": 21,
+            "log": "gestion_ambiental/alertas_por_indicador/ruido/alertas_ruido.log"
+        }
+    },
+    "total_alertas": 79,
+    "anomalias": {
+        "total": 0,
+        "alertas_invalidas": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "indicadores_desconocidos": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "informes_sin_dato_de_alertas": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "archivos_ignorados_en_salida": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "lineas_con_bytes_corruptos": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "advertencias_de_origen": {
+            "cantidad": 0,
+            "detalles": []
+        },
+        "errores_de_proceso": {
+            "cantidad": 0,
+            "detalles": []
+        }
+    },
+    "resumen_resguardado": {
+        "existe": true,
+        "ruta": "gestion_ambiental/resumen_resguardado.txt"
+    },
+    "bitacora": "logs/gestion_ambiental.log",
+    "marca_de_ejecucion": "2026-09-09 23:29:11"
 }

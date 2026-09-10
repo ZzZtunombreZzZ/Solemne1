@@ -1,13 +1,13 @@
-INFORME ESTACION AMBIENTAL
+INFORME DE ESTACIÓN AMBIENTAL
 Archivo procesado: estacion_STG03_20240102.jsonl
-Estacion: STG03
-Fecha del archivo: 20240102
-Lineas leidas: 16
-Mediciones validas: 15
-Mediciones invalidas: 1
-Temperatura promedio: 22.68 °C
-Humedad promedio: 51.01 %
-PM2.5 maximo: 449.18 ug/m3
-Ruido maximo: 124.09 dB
-Alertas detectadas: 32
-Primera alerta: 2024-01-01T00:00:00
+Estación: STG03
+Fecha del archivo: 2024-01-02
+Líneas leídas: 16
+Mediciones válidas: 15
+Mediciones inválidas: 1
+Temperatura promedio: 26.02 °C
+Humedad promedio: 62.05 %
+PM2.5 máximo: 91.89 ug/m3
+Ruido máximo: 97.22 dB
+Alertas detectadas: 4
+Primera alerta: 2024-01-02T12:24:36

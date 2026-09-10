@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "STG04", "temperatura": 20.46, "humedad": 28.76, "pm25": 8.75, "ruido_db": 67.64}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "STG04", "temperatura": 24.27, "humedad": 41.3, "pm25": 14.97, "ruido_db": 36.26}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "STG04", "temperatura": 26.56, "humedad": 37.02, "pm25": 25.65, "ruido_db": 54.72}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "STG04", "temperatura": 17.47, "humedad": 53.68, "pm25": 4.07, "ruido_db": 52.92}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "STG04", "temperatura": 17.22, "humedad": 61.52, "pm25": 6.05, "ruido_db": 35.35}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "STG04", "temperatura": 32.08, "humedad": 55.33, "pm25": 26.93, "ruido_db": 54.84}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "STG04", "temperatura": 26.8, "humedad": 54.81, "pm25": 22.72, "ruido_db": 54.69}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "STG04", "temperatura": 29.58, "humedad": 70.18, "pm25": 22.73, "ruido_db": 63.35}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "STG04", "temperatura": 29.9, "humedad": 48.28, "pm25": 22.11, "ruido_db": 45.45}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "STG04", "temperatura": 12.52, "humedad": 79.62, "pm25": 19.94, "ruido_db": 61.22}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "STG04", "temperatura": 20.85, "humedad": 64.89, "pm25": 4.19, "ruido_db": 61.39}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "STG04", "temperatura": 38.92, "humedad": 46.99, "pm25": 8.51, "ruido_db": 101.55}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "STG04", "temperatura": 43.87, "humedad": 80.66, "pm25": 18.93, "ruido_db": 47.67}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "STG04", "temperatura": 14.91, "humedad": 12.9, "pm25": 10.53, "ruido_db": 53.47}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "STG04", "temperatura": 22.89, "humedad": 39.35, "pm25": 74.92, "ruido_db": 92.44}
+{"timestamp": "2024-01-01T21:45:15", "estacion": "STG04", "temperatura": 24.5, "humedad": 55.0, "pm25": -1.0, "ruido_db": 48.0}

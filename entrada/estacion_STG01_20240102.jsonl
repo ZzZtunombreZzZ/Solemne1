@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-02T00:00:00", "estacion": "STG01", "temperatura": 18.99, "humedad": 38.76, "pm25": 11.88, "ruido_db": 49.49}
+{"timestamp": "2024-01-02T03:07:13", "estacion": "STG01", "temperatura": 25.06, "humedad": 31.76, "pm25": 28.56, "ruido_db": 45.96}
+{"timestamp": "2024-01-02T06:14:26", "estacion": "STG01", "temperatura": 24.88, "humedad": 48.94, "pm25": 16.84, "ruido_db": 48.52}
+{"timestamp": "2024-01-02T09:21:39", "estacion": "STG01", "temperatura": 17.14, "humedad": 69.12, "pm25": 5.07, "ruido_db": 45.77}
+{"timestamp": "2024-01-02T12:28:52", "estacion": "STG01", "temperatura": 20.85, "humedad": 48.79, "pm25": 24.02, "ruido_db": 40.4}
+{"timestamp": "2024-01-02T15:35:05", "estacion": "STG01", "temperatura": 29.36, "humedad": 63.69, "pm25": 3.16, "ruido_db": 60.28}
+{"timestamp": "2024-01-02T18:42:18", "estacion": "STG01", "temperatura": 15.47, "humedad": 82.81, "pm25": 23.22, "ruido_db": 55.82}
+{"timestamp": "2024-01-02T21:49:31", "estacion": "STG01", "temperatura": 11.99, "humedad": 39.48, "pm25": 12.81, "ruido_db": 49.92}
+{"timestamp": "2024-01-02T00:56:44", "estacion": "STG01", "temperatura": 28.85, "humedad": 37.32, "pm25": 28.79, "ruido_db": 44.17}
+{"timestamp": "2024-01-02T03:03:57", "estacion": "STG01", "temperatura": 44.28, "humedad": 51.41, "pm25": 3.38, "ruido_db": 45.91}
+{"timestamp": "2024-01-02T06:10:10", "estacion": "STG01", "temperatura": 11.15, "humedad": 15.26, "pm25": 26.92, "ruido_db": 66.55}
+{"timestamp": "2024-01-02T09:17:23", "estacion": "STG01", "temperatura": 30.29, "humedad": 75.73, "pm25": 125.01, "ruido_db": 103.56}
+{"timestamp": "2024-01-02T12:24:36", "estacion": "STG01", "temperatura": 28.65, "humedad": 66.33, "pm25": 8.63, "ruido_db": 108.54}
+{"timestamp": "2024-01-02T15:31:49", "estacion": "STG01", "temperatura": 36.09, "humedad": 64.31, "pm25": 21.37, "ruido_db": 67.18}
+{"timestamp": "2024-01-02T18:38:02", "estacion": "STG01", "temperatura": 24.6, "humedad": 4.95, "pm25": 152.79, "ruido_db": 41.96}
+{"timestamp": "2024-01-02T21:45:15", "estacion": "STG01", "temperatura": 24.5, "humedad": 55.0, "ruido_db": 48.0}

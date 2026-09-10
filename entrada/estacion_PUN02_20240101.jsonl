@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "PUN02", "temperatura": 11.54, "humedad": 26.73, "pm25": 13.35, "ruido_db": 68.49}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "PUN02", "temperatura": 12.3, "humedad": 27.85, "pm25": 29.26, "ruido_db": 52.63}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "PUN02", "temperatura": 13.58, "humedad": 41.11, "pm25": 27.0, "ruido_db": 55.74}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "PUN02", "temperatura": 22.88, "humedad": 62.85, "pm25": 8.38, "ruido_db": 54.84}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "PUN02", "temperatura": 31.33, "humedad": 86.48, "pm25": 15.35, "ruido_db": 65.9}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "PUN02", "temperatura": 29.79, "humedad": 35.95, "pm25": 25.6, "ruido_db": 66.72}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "PUN02", "temperatura": 25.75, "humedad": 36.91, "pm25": 27.24, "ruido_db": 69.07}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "PUN02", "temperatura": 25.76, "humedad": 79.69, "pm25": 23.56, "ruido_db": 36.0}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "PUN02", "temperatura": 11.92, "humedad": 53.27, "pm25": 13.27, "ruido_db": 42.04}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "PUN02", "temperatura": 17.61, "humedad": 38.4, "pm25": 29.0, "ruido_db": 67.65}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "PUN02", "temperatura": 31.91, "humedad": 15.13, "pm25": 5.78, "ruido_db": 64.36}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "PUN02", "temperatura": 10.5, "humedad": 55.3, "pm25": 56.78, "ruido_db": 68.62}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "PUN02", "temperatura": 42.15, "humedad": 33.34, "pm25": 20.27, "ruido_db": 102.04}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "PUN02", "temperatura": 40.33, "humedad": 29.64, "pm25": 27.0, "ruido_db": 52.81}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "PUN02", "temperatura": 14.68, "humedad": 4.07, "pm25": 7.43, "ruido_db": 68.11}
+{"timestamp": "2024-01-01T21:45:15", "estacion": "PUN02", "temperatura": 24.5, "humedad": 55.0, "pm25": -1.0, "ruido_db": 48.0}

@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "CON01", "temperatura": 33.85, "humedad": 75.03, "pm25": 3.92, "ruido_db": 35.88}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "CON01", "temperatura": 17.66, "humedad": 84.26, "pm25": 16.44, "ruido_db": 54.95}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "CON01", "temperatura": 32.71, "humedad": 56.85, "pm25": 26.76, "ruido_db": 36.88}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "CON01", "temperatura": 20.14, "humedad": 46.06, "pm25": 15.99, "ruido_db": 51.91}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "CON01", "temperatura": 13.19, "humedad": 52.55, "pm25": 26.3, "ruido_db": 42.71}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "CON01", "temperatura": 16.19, "humedad": 60.89, "pm25": 13.27, "ruido_db": 53.07}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "CON01", "temperatura": 19.07, "humedad": 63.37, "pm25": 20.09, "ruido_db": 55.65}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "CON01", "temperatura": 22.05, "humedad": 78.55, "pm25": 2.55, "ruido_db": 60.15}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "CON01", "temperatura": 30.79, "humedad": 67.23, "pm25": 17.8, "ruido_db": 68.29}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "CON01", "temperatura": 31.46, "humedad": 64.54, "pm25": 28.73, "ruido_db": 39.46}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "CON01", "temperatura": 19.18, "humedad": 67.79, "pm25": 15.49, "ruido_db": 57.73}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "CON01", "temperatura": 18.19, "humedad": 26.34, "pm25": 7.55, "ruido_db": 50.4}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "CON01", "temperatura": 17.38, "humedad": 36.58, "pm25": 25.65, "ruido_db": 45.89}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "CON01", "temperatura": 45.98, "humedad": 25.68, "pm25": 16.56, "ruido_db": 41.37}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "CON01", "temperatura": 11.5, "humedad": 16.45, "pm25": 22.41, "ruido_db": 46.44}
+{"timestamp": "2024-01-01T21:45:15", "estacion": "CON01", "temperatura": 24.5, "humedad": 55.0, "pm25": -1.0, "ruido_db": 48.0}

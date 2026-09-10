@@ -1,8 +1,24 @@
+# Material de trabajo interno, no forma parte del entregable
 00Info/
-entrada/*
-salida/*
-alertas/*
-!entrada/.gitkeep
-!salida/.gitkeep
-!alertas/.gitkeep
-__pycache__
+
+# Artefactos de Python
+__pycache__/
+*.pyc
+
+# Temporales del gestor de incidencias (se crean y se reemplazan de forma atomica)
+*.log.tmp
+
+# IMPORTANTE: entrada/, salida/, alertas/, gestion_ambiental/ y logs/ SI se versionan.
+# La pauta los exige como evidencia minima del zip que se sube a BlackBoard:
+#   - entrada/           los 20 archivos estacion_CODIGO_AAAAMMDD.jsonl
+#   - salida/            resumen_ambiental.txt (los informes los mueve el gestor)
+#   - alertas/           alertas_detectadas.log
+#   - gestion_ambiental/ informes clasificados, alertas por indicador e inventario
+#   - logs/              bitacora de gestion
+#   - evidencias/        comparacion, salidas de comandos en Debian y capturas
+
+# Metadatos de macOS
+.DS_Store
+
+# El zip de entrega se genera FUERA del repositorio, nunca dentro
+*.zip

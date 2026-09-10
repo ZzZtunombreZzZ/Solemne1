@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-02T00:00:00", "estacion": "STG02", "temperatura": 30.88, "humedad": 78.13, "pm25": 12.81, "ruido_db": 43.72}
+{"timestamp": "2024-01-02T03:07:13", "estacion": "STG02", "temperatura": 23.02, "humedad": 62.74, "pm25": 27.15, "ruido_db": 55.56}
+{"timestamp": "2024-01-02T06:14:26", "estacion": "STG02", "temperatura": 26.95, "humedad": 47.08, "pm25": 9.6, "ruido_db": 48.86}
+{"timestamp": "2024-01-02T09:21:39", "estacion": "STG02", "temperatura": 12.34, "humedad": 84.39, "pm25": 8.84, "ruido_db": 59.06}
+{"timestamp": "2024-01-02T12:28:52", "estacion": "STG02", "temperatura": 15.56, "humedad": 80.62, "pm25": 20.55, "ruido_db": 38.08}
+{"timestamp": "2024-01-02T15:35:05", "estacion": "STG02", "temperatura": 11.56, "humedad": 63.53, "pm25": 3.43, "ruido_db": 37.93}
+{"timestamp": "2024-01-02T18:42:18", "estacion": "STG02", "temperatura": 12.69, "humedad": 36.96, "pm25": 25.79, "ruido_db": 64.99}
+{"timestamp": "2024-01-02T21:49:31", "estacion": "STG02", "temperatura": 31.88, "humedad": 86.9, "pm25": 2.68, "ruido_db": 41.49}
+{"timestamp": "2024-01-02T00:56:44", "estacion": "STG02", "temperatura": 33.32, "humedad": 29.12, "pm25": 2.36, "ruido_db": 55.92}
+{"timestamp": "2024-01-02T03:03:57", "estacion": "STG02", "temperatura": 30.33, "humedad": 32.87, "pm25": 5.6, "ruido_db": 66.02}
+{"timestamp": "2024-01-02T06:10:10", "estacion": "STG02", "temperatura": 16.34, "humedad": 78.62, "pm25": 17.55, "ruido_db": 54.98}
+{"timestamp": "2024-01-02T09:17:23", "estacion": "STG02", "temperatura": 15.27, "humedad": 12.74, "pm25": 20.16, "ruido_db": 58.91}
+{"timestamp": "2024-01-02T12:24:36", "estacion": "STG02", "temperatura": 17.67, "humedad": 33.81, "pm25": 154.62, "ruido_db": 93.79}
+{"timestamp": "2024-01-02T15:31:49", "estacion": "STG02", "temperatura": 26.62, "humedad": 84.7, "pm25": 14.42, "ruido_db": 109.77}
+{"timestamp": "2024-01-02T18:38:02", "estacion": "STG02", "temperatura": 46.14, "humedad": 50.37, "pm25": 29.99, "ruido_db": 64.92}
+{"timestamp": "2024-01-02T21:45:15", "estacion": "XXX99", "temperatura": 24.5, "humedad": 55.0, "pm25": 12.0, "ruido_db": 48.0}

@@ -1,0 +1,31 @@
+POR QUE ESTA CARPETA SOLO CONTIENE EL RESUMEN CONSOLIDADO
+=========================================================
+
+La Parte 1 pide un informe individual por archivo procesado dentro de salida/.
+Esos 20 informes SI se generaron aqui: los produce src/secuencial.py o
+src/concurrente.py con el nombre informe_CODIGO_AAAAMMDD.txt
+
+Despues, el gestor de incidencias de la Parte 2 (src/gestor_incidencias.py)
+los MUEVE a sus carpetas de clasificacion, que es exactamente lo que exigen
+los puntos 3, 4 y 5 de la pauta de la Parte 2:
+
+  gestion_ambiental/sin_alertas/    informes con 0 alertas
+  gestion_ambiental/con_alertas/    informes con 1 a 3 alertas
+  gestion_ambiental/criticas/       informes con 4 o mas alertas
+
+Por eso salida/ conserva unicamente resumen_ambiental.txt, que la pauta pide
+mantener aqui de forma explicita (ademas de copiarlo como
+gestion_ambiental/resumen_resguardado.txt).
+
+DONDE ESTAN LOS 20 INFORMES TAL COMO LOS DEJO LA PARTE 1
+--------------------------------------------------------
+Se respaldaron antes de ejecutar el gestor en:
+
+  evidencias/salida_parte1/     20 informes individuales + resumen_ambiental.txt
+
+PARA REGENERARLOS
+-----------------
+  python3 scripts/generar_archivos_entrada.py
+  python3 src/concurrente.py
+
+y los 20 informes vuelven a aparecer en esta carpeta.

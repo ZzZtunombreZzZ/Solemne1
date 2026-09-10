@@ -1,0 +1,16 @@
+{"timestamp": "2024-01-01T00:00:00", "estacion": "PUN04", "temperatura": 28.82, "humedad": 49.35, "pm25": 6.81, "ruido_db": 35.75}
+{"timestamp": "2024-01-01T03:07:13", "estacion": "PUN04", "temperatura": 12.56, "humedad": 41.85, "pm25": 12.57, "ruido_db": 64.93}
+{"timestamp": "2024-01-01T06:14:26", "estacion": "PUN04", "temperatura": 25.65, "humedad": 57.63, "pm25": 12.97, "ruido_db": 65.03}
+{"timestamp": "2024-01-01T09:21:39", "estacion": "PUN04", "temperatura": 25.25, "humedad": 83.35, "pm25": 5.63, "ruido_db": 59.74}
+{"timestamp": "2024-01-01T12:28:52", "estacion": "PUN04", "temperatura": 22.38, "humedad": 50.01, "pm25": 15.67, "ruido_db": 66.84}
+{"timestamp": "2024-01-01T15:35:05", "estacion": "PUN04", "temperatura": 24.5, "humedad": 62.11, "pm25": 15.76, "ruido_db": 56.88}
+{"timestamp": "2024-01-01T18:42:18", "estacion": "PUN04", "temperatura": 14.22, "humedad": 60.01, "pm25": 13.86, "ruido_db": 60.12}
+{"timestamp": "2024-01-01T21:49:31", "estacion": "PUN04", "temperatura": 15.45, "humedad": 65.91, "pm25": 18.32, "ruido_db": 37.46}
+{"timestamp": "2024-01-01T00:56:44", "estacion": "PUN04", "temperatura": 22.19, "humedad": 83.66, "pm25": 21.69, "ruido_db": 45.03}
+{"timestamp": "2024-01-01T03:03:57", "estacion": "PUN04", "temperatura": 29.1, "humedad": 69.48, "pm25": 7.17, "ruido_db": 40.28}
+{"timestamp": "2024-01-01T06:10:10", "estacion": "PUN04", "temperatura": 31.63, "humedad": 71.42, "pm25": 2.71, "ruido_db": 66.05}
+{"timestamp": "2024-01-01T09:17:23", "estacion": "PUN04", "temperatura": 28.63, "humedad": 82.83, "pm25": 4.04, "ruido_db": 64.75}
+{"timestamp": "2024-01-01T12:24:36", "estacion": "PUN04", "temperatura": 39.8, "humedad": 62.54, "pm25": 19.44, "ruido_db": 90.72}
+{"timestamp": "2024-01-01T15:31:49", "estacion": "PUN04", "temperatura": 42.25, "humedad": 27.25, "pm25": 20.49, "ruido_db": 37.91}
+{"timestamp": "2024-01-01T18:38:02", "estacion": "PUN04", "temperatura": 33.14, "humedad": 13.54, "pm25": 10.07, "ruido_db": 41.17}
+{"timestamp": "2024-01-01T21:45:15", "estacion": PUN04, "temperatura": 

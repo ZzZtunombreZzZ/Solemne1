@@ -1,0 +1,13 @@
+# Los archivos de datos y de evidencia se generan en Debian con saltos de linea LF.
+# Sin esta regla, Git en Windows los convertiria a CRLF al clonar y el proyecto dejaria
+# de reproducirse byte a byte (los .jsonl cambiarian de tamano y los diff darian falsos positivos).
+* text=auto eol=lf
+
+# Binarios: no tocar nunca
+*.pdf   binary
+*.docx  binary
+*.png   binary
+*.jpg   binary
+*.webp  binary
+*.opus  binary
+*.zip   binary

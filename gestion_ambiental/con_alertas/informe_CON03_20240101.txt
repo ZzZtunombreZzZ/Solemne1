@@ -1,0 +1,13 @@
+INFORME DE ESTACIÓN AMBIENTAL
+Archivo procesado: estacion_CON03_20240101.jsonl
+Estación: CON03
+Fecha del archivo: 2024-01-01
+Líneas leídas: 16
+Mediciones válidas: 15
+Mediciones inválidas: 1
+Temperatura promedio: 22.40 °C
+Humedad promedio: 55.41 %
+PM2.5 máximo: 123.73 ug/m3
+Ruido máximo: 95.22 dB
+Alertas detectadas: 3
+Primera alerta: 2024-01-01T12:24:36

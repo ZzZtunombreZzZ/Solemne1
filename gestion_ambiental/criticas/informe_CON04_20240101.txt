@@ -1,13 +1,13 @@
-INFORME ESTACION AMBIENTAL
+INFORME DE ESTACIÓN AMBIENTAL
 Archivo procesado: estacion_CON04_20240101.jsonl
-Estacion: CON04
-Fecha del archivo: 20240101
-Lineas leidas: 16
-Mediciones validas: 15
-Mediciones invalidas: 1
-Temperatura promedio: 17.93 °C
-Humedad promedio: 49.87 %
-PM2.5 maximo: 493.41 ug/m3
-Ruido maximo: 128.92 dB
-Alertas detectadas: 30
-Primera alerta: 2024-01-01T00:00:00
+Estación: CON04
+Fecha del archivo: 2024-01-01
+Líneas leídas: 16
+Mediciones válidas: 15
+Mediciones inválidas: 1
+Temperatura promedio: 25.04 °C
+Humedad promedio: 52.44 %
+PM2.5 máximo: 175.81 ug/m3
+Ruido máximo: 107.54 dB
+Alertas detectadas: 5
+Primera alerta: 2024-01-01T09:17:23

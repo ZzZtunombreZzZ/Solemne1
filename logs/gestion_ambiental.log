@@ -1,24 +1,28 @@
-[2026-09-08 19:58:25] --- INICIO DE GESTIÓN DE INCIDENCIAS ---
-[2026-09-08 19:58:25] Resumen copiado correctamente a gestion_ambiental/resumen_resguardado.txt
-[2026-09-08 19:58:25] Informe movido: informe_PUN02_20240101.txt -> criticas (29 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_CON02_20240101.txt -> criticas (27 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_CON01_20240101.txt -> criticas (26 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG01_20240101.txt -> criticas (29 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_PUN01_20240101.txt -> criticas (29 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_PUN04_20240101.txt -> criticas (29 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG02_20240101.txt -> criticas (23 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_VAL01_20240101.txt -> criticas (30 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_VAL04_20240101.txt -> criticas (22 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG04_20240101.txt -> criticas (33 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG03_20240101.txt -> criticas (31 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_VAL03_20240101.txt -> criticas (25 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_CON04_20240101.txt -> criticas (30 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_VAL02_20240101.txt -> criticas (26 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG04_20240102.txt -> criticas (25 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_CON03_20240101.txt -> criticas (23 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_PUN03_20240101.txt -> criticas (33 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG02_20240102.txt -> criticas (32 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG03_20240102.txt -> criticas (32 alertas)
-[2026-09-08 19:58:25] Informe movido: informe_STG01_20240102.txt -> criticas (28 alertas)
-[2026-09-08 19:58:25] Inventario generado exitosamente
-[2026-09-08 19:58:25] --- FIN DE GESTIÓN DE INCIDENCIAS ---
+[2026-09-09 23:29:11] --- INICIO DE GESTION DE INCIDENCIAS ---
+[2026-09-09 23:29:11] Resumen resguardado en gestion_ambiental/resumen_resguardado.txt
+[2026-09-09 23:29:11] Informe movido: informe_CON01_20240101.txt -> con_alertas (2 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_CON02_20240101.txt -> criticas (4 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_CON03_20240101.txt -> con_alertas (3 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_CON04_20240101.txt -> criticas (5 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_PUN01_20240101.txt -> con_alertas (2 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_PUN02_20240101.txt -> criticas (6 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_PUN03_20240101.txt -> con_alertas (1 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_PUN04_20240101.txt -> criticas (4 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG01_20240101.txt -> con_alertas (1 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG01_20240102.txt -> criticas (8 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG02_20240101.txt -> criticas (5 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG02_20240102.txt -> criticas (5 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG03_20240101.txt -> con_alertas (2 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG03_20240102.txt -> criticas (4 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG04_20240101.txt -> criticas (6 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_STG04_20240102.txt -> criticas (6 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_VAL01_20240101.txt -> con_alertas (3 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_VAL02_20240101.txt -> criticas (4 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_VAL03_20240101.txt -> con_alertas (1 alertas)
+[2026-09-09 23:29:11] Informe movido: informe_VAL04_20240101.txt -> criticas (7 alertas)
+[2026-09-09 23:29:11] Informes movidos en esta corrida: 20
+[2026-09-09 23:29:11] Logs por indicador reconstruidos de forma atomica
+[2026-09-09 23:29:11] Alertas distribuidas por indicador: 79
+[2026-09-09 23:29:11] Inventario generado en gestion_ambiental/inventario_ambiental.json: 20 informes, 79 alertas.
+[2026-09-09 23:29:11] CONTROL DE ERRORES: no se detectaron anomalias en esta corrida. El procesamiento termino completo.
+[2026-09-09 23:29:11] --- FIN DE GESTION DE INCIDENCIAS ---
