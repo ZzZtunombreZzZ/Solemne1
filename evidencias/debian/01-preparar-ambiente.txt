@@ -1,0 +1,42 @@
+########################################################################
+# Pauta Parte 2, punto 2.a) y 2.b) - Preparar ambiente                 #
+########################################################################
+
+$ sudo apt update
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Hit:1 http://deb.debian.org/debian trixie InRelease
+Hit:2 http://security.debian.org/debian-security trixie-security InRelease
+Hit:3 http://deb.debian.org/debian trixie-updates InRelease
+Reading package lists...
+Building dependency tree...
+Reading state information...
+All packages are up to date.
+
+$ sudo apt upgrade -y
+
+WARNING: apt does not have a stable CLI interface. Use with caution in scripts.
+
+Reading package lists...
+Building dependency tree...
+Reading state information...
+Calculating upgrade...
+Summary:
+  Upgrading: 0, Installing: 0, Removing: 0, Not Upgrading: 0
+
+--- Entorno del lenguaje usado en la Parte 1 ---
+$ python3 --version
+Python 3.13.5
+
+$ apt list --installed | grep -E 'python3|openssh-server|time'
+openssh-server/stable,now 1:10.0p1-7+deb13u4 amd64 [installed]
+python3-venv/stable,now 3.13.5-1 amd64 [installed]
+python3/stable,now 3.13.5-1 amd64 [installed]
+time/stable,now 1.9-0.2 amd64 [installed]
+
+El proyecto usa exclusivamente la biblioteca estandar de Python:
+no requiere pip, entornos virtuales ni compilacion.
+
+$ python3 -m py_compile src/*.py scripts/*.py  (comprobacion de que todo compila)
+Los cuatro modulos compilan sin errores.

@@ -1,0 +1,102 @@
+########################################################################
+# Pauta Parte 2, punto d.13 - Controlar un error sin detenerse         #
+########################################################################
+
+IMPORTANTE: esta demostracion se ejecuta sobre una COPIA del proyecto
+(/home/equipo07/demo_destructiva), para no alterar el estado del entregable. Por eso las marcas de
+tiempo y el inventario de esta seccion NO son los del arbol entregado.
+
+Estado inicial de la copia:
+  temperatura   21 alertas
+  humedad       17 alertas
+  pm25          20 alertas
+  ruido         21 alertas
+  inventario total_alertas: 79
+
+=== Se inyectan cuatro fallas distintas ===
+  1. Linea sin separadores
+  2. Linea con campos insuficientes
+  3. Indicador desconocido 'Radiacion'
+  4. Informe sin la linea 'Alertas detectadas'
+
+$ python3 src/gestor_incidencias.py
+Codigo de salida: 0   (el gestor NO se detuvo)
+
+=== El procesamiento se completo pese a los errores ===
+  inventario existe: SI
+  alertas conservadas: 79
+
+=== Anomalias en la bitacora ===
+[2026-09-09 23:29:11] CONTROL DE ERRORES: no se detectaron anomalias en esta corrida. El procesamiento termino completo.
+[2026-09-09 23:29:11] ANOMALIA: el informe informe_XXX99_20240101.txt no declara la linea 'Alertas detectadas: N'. No se clasifica, queda en salida/ para revision manual. Se continua.
+[2026-09-09 23:29:11] ANOMALIA: alerta con formato invalido en la linea 80 de alertas/alertas_detectadas.log: 'linea_corrupta_sin_separadores'. Se descarta y se continua.
+[2026-09-09 23:29:11] ANOMALIA: alerta con formato invalido en la linea 81 de alertas/alertas_detectadas.log: 'faltan;campos;aqui'. Se descarta y se continua.
+[2026-09-09 23:29:11] ANOMALIA: indicador desconocido 'Radiacion' en la linea 82 de alertas/alertas_detectadas.log. Se descarta y se continua.
+[2026-09-09 23:29:11] CONTROL DE ERRORES: se detectaron 4 anomalias (2 alertas con formato invalido, 1 con indicador desconocido, 0 lineas con bytes corruptos, 1 informes sin dato de alertas, 0 archivos ignorados en salida, 0 advertencias sobre el origen de alertas, 0 errores de proceso capturados). Todas quedaron registradas y el procesamiento CONTINUO hasta generar el inventario.
+
+=== Anomalias en el inventario ===
+{
+  "total": 4,
+  "alertas_invalidas": {
+    "cantidad": 2,
+    "ejemplos": [
+      {
+        "linea": 80,
+        "contenido": "linea_corrupta_sin_separadores"
+      },
+      {
+        "linea": 81,
+        "contenido": "faltan;campos;aqui"
+      }
+    ]
+  },
+  "indicadores_desconocidos": {
+    "cantidad": 1,
+    "ejemplos": [
+      {
+        "linea": 82,
+        "indicador": "Radiacion",
+        "contenido": "archivo.jsonl;STG01;2024-01-01T08:00:00;Radiacion;9;5"
+      }
+    ]
+  },
+  "informes_sin_dato_de_alertas": {
+    "cantidad": 1,
+    "archivos": [
+      "informe_XXX99_20240101.txt"
+    ]
+  },
+  "archivos_ignorados_en_salida": {
+    "cantidad": 0,
+    "archivos": []
+  },
+  "lineas_con_bytes_corruptos": {
+    "cantidad": 0,
+    "ejemplos": []
+  },
+  "advertencias_de_origen": {
+    "cantidad": 0,
+    "detalles": []
+  },
+  "errores_de_proceso": {
+    "cantidad": 0,
+    "detalles": []
+  }
+}
+
+########################################################################
+# Rama sin_alertas/ (informe con 0 alertas)                            #
+########################################################################
+
+El conjunto de entrada cumple la pauta, que exige AL MENOS UNA alerta por
+archivo, asi que con datos validos sin_alertas/ queda legitimamente vacia.
+La rama se demuestra con un informe de control:
+$ ls -lah gestion_ambiental/sin_alertas/
+total 12K
+drwxrwxr-x 2 equipo07 equipo07 4.0K Sep  9 23:29 .
+drwxrwxr-x 6 equipo07 equipo07 4.0K Sep  9 23:29 ..
+-rw-rw-r-- 1 equipo07 equipo07  349 Sep  9 23:29 informe_CTL00_20240101.txt
+
+  sin_alertas/     1 informes
+  con_alertas/     8 informes
+  criticas/       12 informes

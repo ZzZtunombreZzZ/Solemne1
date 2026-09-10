@@ -1,20 +1,162 @@
-COMPARACION PARTE 1
+======================================================================
+COMPARACION PARTE 1: VERSION SECUENCIAL VS VERSION CONCURRENTE
+======================================================================
+Equipo 07 - Seccion NRC 18897 - Lenguaje: Python 3.13.5
+Integrantes: Benjamin Zamora, Jose Palma, Franco Maripil,
+             Nicolas Portilla, Thomas Marquez.
 
-Las dos versiones se ejecutaron con el mismo conjunto de archivos JSONL.
-Los tiempos pueden variar ligeramente entre ejecuciones.
+Ambas versiones se ejecutaron en la maquina virtual Debian GNU/Linux 13
+(trixie), sobre EL MISMO conjunto de 20 archivos .jsonl generados con
+semilla fija 20240908. La evidencia completa de esta corrida esta en
+evidencias/debian/03-ejecucion-parte1.txt y la observacion de procesos
+en evidencias/debian/04-observacion-procesos.txt.
 
-Metrica                         Secuencial       Concurrente
-Archivos procesados             20               20
-Lineas leidas                   320              320
-Mediciones validas              300              300
-Mediciones invalidas            20               20
-Alertas detectadas              562              562
-PM2.5 maximo global             499.95           499.95
-Ruido maximo global             139.55           139.55
-Cantidad de trabajadores        1                3
 
-La version secuencial procesa cada archivo completamente antes de comenzar
-el siguiente. La version concurrente distribuye los archivos mediante una
-cola compartida y utiliza tres trabajadores. Los acumuladores globales y la
-escritura del archivo de alertas se protegen con mutex para evitar condiciones
-de carrera y mantener resultados consistentes.
+----------------------------------------------------------------------
+1. TABLA COMPARATIVA
+----------------------------------------------------------------------
+
+Metrica                         Secuencial          Concurrente
+--------------------------------------------------------------------
+Archivos procesados             20                  20
+Mediciones validas              300                 300
+Mediciones invalidas            20                  20
+Alertas detectadas              79                  79
+PM2.5 maximo global             177.87 ug/m3        177.87 ug/m3
+Ruido maximo global             109.77 dB           109.77 dB
+Tiempo de ejecucion             0.005 s             0.007 s
+Cantidad de trabajadores        1                   3
+--------------------------------------------------------------------
+
+El "Tiempo de ejecucion" de la tabla es el tiempo interno que mide cada
+programa y que queda escrito en su resumen consolidado. El valor de la
+columna Concurrente (0.007 s) es exactamente el que aparece hoy en
+salida/resumen_ambiental.txt, porque la version concurrente es la ultima
+que se ejecuto; el de la columna Secuencial (0.005 s) quedo respaldado en
+evidencias/debian/resumen_secuencial.txt. Medido por fuera con el comando
+time del sistema, el reloj total de la misma corrida fue:
+
+  Secuencial : real 0m0.019s   user 0m0.016s   sys 0m0.004s
+  Concurrente: real 0m0.023s   user 0m0.024s   sys 0m0.000s
+
+Metricas complementarias, tambien identicas en las dos versiones:
+
+  Lineas leidas                 320
+  Temperatura promedio global   23.46 C
+  Humedad promedio global       54.85 %
+  Estacion con mas alertas      STG04
+
+Las 6 metricas que la pauta exige comparar coinciden 6 de 6. Ademas se
+compararon uno por uno los 20 informes individuales (0 diferencias) y la
+bitacora alertas/alertas_detectadas.log, que contiene las mismas 79
+alertas en ambas versiones, sin perdidas ni duplicados.
+
+
+----------------------------------------------------------------------
+2. EXPLICACION TECNICA
+----------------------------------------------------------------------
+
+CONCURRENCIA Y PARALELISMO NO SON LO MISMO
+La concurrencia es una forma de estructurar el programa: el trabajo se
+divide en tareas que avanzan de manera intercalada y cuyo orden relativo
+no esta determinado de antemano. El paralelismo es un hecho fisico de la
+ejecucion: dos o mas instrucciones se ejecutan realmente al mismo tiempo
+en nucleos distintos. Nuestra version concurrente es concurrente por
+diseno (una cola compartida y tres trabajadores que toman archivos a
+medida que se desocupan), y ademas se comprobo que en ciertos tramos es
+paralela: con la carga amplificada, ps midio hasta 103% de CPU y NLWP 4, es
+decir, el proceso consumio mas de un nucleo completo al mismo tiempo. Un
+programa puede ser concurrente sin ser paralelo, pero no al reves.
+
+RECURSOS COMPARTIDOS POR LOS TRABAJADORES
+Los tres trabajadores no son independientes: comparten estado. Comparten
+los acumuladores globales de lineas leidas, mediciones validas y
+mediciones invalidas; las sumas parciales de temperatura y humedad con
+las que despues se calculan los promedios globales; los maximos globales
+de PM2.5 y de ruido; el contador global de alertas; el diccionario de
+alertas por estacion, que es el que decide cual es la estacion mas
+critica (STG04); y el archivo alertas/alertas_detectadas.log. Tambien
+comparten la cola de archivos, la salida de error estandar y el registro
+de archivos fallidos. Todo lo que es privado de un archivo (sus
+contadores locales, su buffer de alertas) se calcula dentro del hilo y no
+necesita proteccion.
+
+SECCION CRITICA APLICADA A ACUMULADORES, MAXIMOS Y ALERTAS
+La seccion critica es el tramo de codigo que toca ese estado compartido y
+que solo un hilo puede recorrer a la vez. En src/concurrente.py se
+implementa con cinco cerrojos, cada uno con una responsabilidad clara:
+
+  - mutex_globales protege el bloque que suma los contadores, acumula
+    temperatura y humedad, actualiza el diccionario de alertas por
+    estacion y compara los maximos de PM2.5 y de ruido.
+  - mutex_alertas protege el diccionario buffers_alertas y el volcado
+    final del archivo alertas/alertas_detectadas.log.
+  - mutex_informes protege la escritura de cada informe individual en
+    salida/, para que dos hilos nunca escriban un archivo a la vez.
+  - mutex_stderr serializa los avisos por salida de error, de modo que
+    los mensajes de distintos hilos no se entremezclen en una linea.
+  - mutex_errores protege la lista de archivos fallidos que main() revisa
+    al final para decidir el codigo de salida del programa.
+
+El caso de los maximos es el mas ilustrativo: "si el valor nuevo es mayor,
+reemplazar" son en realidad tres operaciones (leer, comparar, escribir).
+Sin exclusion mutua, dos hilos pueden leer el mismo valor antiguo y el
+maximo mas alto se pierde. Con los acumuladores ocurre lo mismo: la suma
+tampoco es atomica y una actualizacion perdida da un total menor al real.
+
+RIESGOS DE ESCRIBIR EN alertas_detectadas.log AL MISMO TIEMPO
+Si varios trabajadores escribieran en la bitacora sin coordinacion, se
+arriesgan tres problemas distintos. Primero, escrituras desgarradas: dos
+lineas volcadas parcialmente se intercalan y producen registros corruptos
+que ya no se pueden leer ni contar. Segundo, perdida de registros, porque
+el desplazamiento de escritura del archivo tambien es estado compartido.
+Tercero, resultados no reproducibles: aunque no se corrompiera nada, el
+orden de las lineas dependeria de que hilo gana la carrera y el log
+cambiaria entre corridas. Por eso el diseno hace dos cosas: cada
+trabajador acumula sus alertas en un buffer propio y solo lo deposita,
+bajo mutex_alertas, cuando el archivo termino bien; y el volcado a disco
+ocurre una sola vez al final, recorriendo el plan en orden de nombre de
+archivo. El resultado es un log byte a byte identico al de la version
+secuencial y estable entre ejecuciones.
+
+POR QUE LA CONCURRENCIA MEJORA LA CAPACIDAD DE RESPUESTA PERO NO
+GARANTIZA UNA ACELERACION PROPORCIONAL
+Aqui hay que ser honestos con lo medido: la version concurrente resulto
+LIGERAMENTE MAS LENTA que la secuencial (0.023 s contra 0.019 s de reloj).
+No es un error del programa, es lo esperable a esta escala. Tres
+trabajadores no significan un tercio del tiempo. Primero, existe un costo
+fijo que la version secuencial no paga: crear los hilos, cargar la cola,
+adquirir y liberar los cerrojos y esperar el termino de cada hilo; con 20
+archivos pequenos ese costo fijo pesa mas que el trabajo util. Segundo, la
+parte del programa protegida por mutex es intrinsecamente serial: por mas
+hilos que se agreguen, la consolidacion global no se acelera, que es la
+idea detras de la ley de Amdahl. Tercero, en Python el GIL permite
+ejecutar bytecode de un solo hilo a la vez, de modo que el codigo Python
+puro no logra paralelismo real; los hilos solo se solapan de verdad
+cuando alguno esta en una operacion de entrada/salida o dentro de codigo
+nativo que libera el GIL. Lo que si mejora la concurrencia, incluso sin
+ganancia de tiempo total, es la capacidad de respuesta: el trabajo se
+reparte segun quien se desocupa, un archivo lento no bloquea a los demas
+y el programa sigue avanzando. El paralelismo real aparece cuando el
+trabajo justifica el costo: con la carga amplificada de 4000 archivos se
+observo hasta 103% de CPU y 4 hilos vivos (1 principal + 3 trabajadores).
+
+EFECTO DEL DISCO, DE LA VALIDACION JSON Y DE LA COORDINACION
+Los tres factores tiran en direcciones distintas. El acceso a disco en
+este proyecto son muchas operaciones chicas (20 lecturas .jsonl, 20
+informes, el resumen y la bitacora) sobre un disco virtual dinamico de
+25 GB; ademas /usr/bin/time -v reporto 0 entradas de sistema de archivos
+y 184 salidas, senal de que el contenido de entrada venia de la cache de
+paginas del sistema operativo, asi que no hubo espera larga de disco que
+los hilos pudieran aprovechar para solaparse. La validacion JSON es lo
+contrario: json.loads mas las comprobaciones de tipo, de rango y de
+coherencia de estacion son trabajo de CPU sobre 320 lineas, y ese es
+justamente el tipo de trabajo que el GIL serializa. Los costos de
+coordinacion (la cola, los cinco mutex y los cambios de contexto: la
+corrida oficial registro 149 cambios de contexto voluntarios) son gasto
+puro que solo se amortiza si hay suficiente trabajo por archivo. La
+conclusion, con los numeros a la vista, es que este conjunto de 20
+archivos esta dominado por parseo en CPU y por operaciones de archivo
+pequenas, no por esperas largas de disco, y por eso la concurrencia
+aporta estructura, escalabilidad y capacidad de respuesta antes que una
+reduccion del tiempo total.

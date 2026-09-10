@@ -1,0 +1,113 @@
+########################################################################
+# Pauta Parte 2, punto e) - Observar procesos y sistema de archivos    #
+########################################################################
+
+NOTA METODOLOGICA
+El conjunto oficial de 20 archivos se procesa en milisegundos y 'ps' no alcanza
+a tomar una muestra util. La observacion se hace en dos partes:
+  (A) recursos de la corrida OFICIAL de 20 archivos, con /usr/bin/time -v
+  (B) observacion en vivo con 'ps' sobre una CARGA AMPLIFICADA de 4000 archivos
+      y 64000 lineas, construida replicando los archivos oficiales con otras
+      fechas validas. El conjunto oficial tiene 20 archivos pero solo 16 codigos
+      de estacion distintos, y la replica es por codigo, de ahi los 16 x 250 = 4000.
+Ambas partes se ejecutan sobre COPIAS del proyecto, para no alterar el arbol entregable.
+Todas las metricas del entregable salen del conjunto oficial de 20.
+
+========================================================================
+(A) Recursos de la corrida OFICIAL (20 archivos)
+========================================================================
+$ /usr/bin/time -v python3 src/concurrente.py
+	Command being timed: "python3 src/concurrente.py"
+	User time (seconds): 0.01
+	System time (seconds): 0.00
+	Percent of CPU this job got: 100%
+	Elapsed (wall clock) time (h:mm:ss or m:ss): 0:00.02
+	Maximum resident set size (kbytes): 12964
+	Voluntary context switches: 149
+	Involuntary context switches: 1
+	File system inputs: 0
+	File system outputs: 184
+	Exit status: 0
+
+========================================================================
+(B) Observacion en vivo con carga amplificada
+========================================================================
+Archivos: 4000 | Lineas: 64000
+
+$ python3 src/concurrente.py &
+Muestras de ps tomadas con el proceso vivo: 270
+
+--- Identificacion y recursos del proceso concurrente ---
+$ ps -o pid,ppid,stat,%cpu,%mem,rss,vsz,nlwp,etime,cmd -p <PID>
+    PID    PPID STAT  %CPU %MEM     RSS      VSZ NLWP     ELAPSED CMD
+  10043   10018 Rl   75.0  0.4 18824 249776    4       00:00 python3 src/concurrente.py
+
+Interpretacion de cada campo:
+  PID    identificador del proceso que ejecuta la version concurrente
+  PPID   proceso padre: el shell desde el que se lanzo la ejecucion
+  STAT   R en CPU, S esperando; la 'l' final indica que el proceso es multihilo
+  %CPU   supera el 100% porque suma el trabajo de varios hilos en varios nucleos
+  %MEM   porcentaje de la RAM total de la maquina virtual
+  RSS    memoria fisica residente en RAM, en KiB
+  VSZ    memoria virtual reservada: incluye bibliotecas y regiones no residentes
+  NLWP   numero de hilos: 1 principal + 3 trabajadores = 4
+
+--- Evolucion durante la ejecucion ---
+  10043   10018 R     0.0  0.1  7036  19344    1       00:00 python3 src/concurrente.py
+  10043   10018 Sl    100  0.4 19368 249776    4       00:00 python3 src/concurrente.py
+  10043   10018 Sl    102  0.4 19964 250800    4       00:00 python3 src/concurrente.py
+  10043   10018 Sl    103  0.5 20876 251824    4       00:00 python3 src/concurrente.py
+  10043   10018 R     103  0.5 21600 251776    1       00:00 python3 src/concurrente.py
+
+--- Hilos del proceso (ps -L) y vista del kernel ---
+    PID     TID STAT %CPU COMMAND
+  10043   10043 Sl   75.0 python3
+  10043   10108 Sl    0.0 python3
+  10043   10109 Sl    0.0 python3
+  10043   10111 Rl    0.0 python3
+Name:	python3
+State:	S (sleeping)
+Tgid:	10043
+Pid:	10043
+PPid:	10018
+VmSize:	  249776 kB
+VmRSS:	   18908 kB
+Threads:	4
+
+--- Proceso padre ---
+PPID observado: 10018
+    PID STAT CMD
+  10018 Ss   bash /tmp/rsh_13-procesos-recaptura.sh
+
+========================================================================
+Memoria del sistema, espacio disponible y tamano del proyecto
+========================================================================
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           3.8Gi       379Mi       3.3Gi       3.7Mi       373Mi       3.5Gi
+Swap:          1.3Gi          0B       1.3Gi
+
+$ df -h
+Filesystem      Size  Used Avail Use% Mounted on
+udev            1.9G     0  1.9G   0% /dev
+tmpfs           393M  552K  392M   1% /run
+/dev/sda1        24G  1.2G   21G   6% /
+tmpfs           2.0G     0  2.0G   0% /dev/shm
+tmpfs           5.0M     0  5.0M   0% /run/lock
+tmpfs           1.0M     0  1.0M   0% /run/credentials/systemd-journald.service
+tmpfs           2.0G  160K  2.0G   1% /tmp
+tmpfs           1.0M     0  1.0M   0% /run/credentials/getty@tty1.service
+tmpfs           393M  4.0K  393M   1% /run/user/1000
+
+$ du -sh ~/solemne_so_equipo07
+624K	/home/equipo07/solemne_so_equipo07
+
+$ du -sh ~/solemne_so_equipo07/*
+8.0K	/home/equipo07/solemne_so_equipo07/logs
+8.0K	/home/equipo07/solemne_so_equipo07/salida
+12K	/home/equipo07/solemne_so_equipo07/alertas
+40K	/home/equipo07/solemne_so_equipo07/scripts
+84K	/home/equipo07/solemne_so_equipo07/entrada
+140K	/home/equipo07/solemne_so_equipo07/gestion_ambiental
+164K	/home/equipo07/solemne_so_equipo07/evidencias
+164K	/home/equipo07/solemne_so_equipo07/src

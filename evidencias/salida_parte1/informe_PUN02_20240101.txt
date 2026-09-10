@@ -1,0 +1,13 @@
+INFORME DE ESTACIÓN AMBIENTAL
+Archivo procesado: estacion_PUN02_20240101.jsonl
+Estación: PUN02
+Fecha del archivo: 2024-01-01
+Líneas leídas: 16
+Mediciones válidas: 15
+Mediciones inválidas: 1
+Temperatura promedio: 22.80 °C
+Humedad promedio: 41.78 %
+PM2.5 máximo: 56.78 ug/m3
+Ruido máximo: 102.04 dB
+Alertas detectadas: 6
+Primera alerta: 2024-01-01T06:10:10

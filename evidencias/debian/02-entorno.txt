@@ -1,0 +1,57 @@
+########################################################################
+# Entorno de la maquina virtual Debian                                 #
+########################################################################
+
+$ cat /etc/os-release | head -5
+PRETTY_NAME="Debian GNU/Linux 13 (trixie)"
+NAME="Debian GNU/Linux"
+VERSION_ID="13"
+VERSION="13 (trixie)"
+VERSION_CODENAME=trixie
+
+$ cat /etc/debian_version
+13.6
+
+$ uname -a
+Linux debian-so-equipo07 6.12.107+deb13-amd64 #1 SMP PREEMPT_DYNAMIC Debian 6.12.107-1 (2026-08-29) x86_64 GNU/Linux
+
+$ systemd-detect-virt   (hipervisor sobre el que corre esta VM)
+microsoft
+
+$ nproc  y  lscpu
+4
+CPU(s):                                  4
+Model name:                              Intel(R) Core(TM) i9-14900
+Hypervisor vendor:                       Microsoft
+Virtualization type:                     full
+
+$ free -h
+               total        used        free      shared  buff/cache   available
+Mem:           3.8Gi       424Mi       3.3Gi       3.6Mi       328Mi       3.4Gi
+Swap:          1.3Gi          0B       1.3Gi
+
+$ lsblk   (disco virtual y particionado)
+NAME   MAJ:MIN RM  SIZE RO TYPE MOUNTPOINTS
+fd0      2:0    1    4K  0 disk 
+sda      8:0    0   25G  0 disk 
+├─sda1   8:1    0 23.7G  0 part /
+├─sda2   8:2    0    1K  0 part 
+└─sda5   8:5    0  1.3G  0 part [SWAP]
+sr0     11:0    1 1024M  1 rom  
+
+$ df -h /
+Filesystem      Size  Used Avail Use% Mounted on
+/dev/sda1        24G  1.2G   21G   6% /
+
+$ ip -4 -br addr show   y  ip route   (red NAT)
+lo               UNKNOWN        127.0.0.1/8 
+eth0             UP             172.22.205.178/20 
+default via 172.22.192.1 dev eth0 proto dhcp src 172.22.205.178 metric 1002 
+172.22.192.0/20 dev eth0 proto dhcp scope link src 172.22.205.178 metric 1002 
+
+$ hostnamectl --static  ;  id
+debian-so-equipo07
+uid=1000(equipo07) gid=1000(equipo07) groups=1000(equipo07),24(cdrom),25(floppy),27(sudo),29(audio),30(dip),44(video),46(plugdev),100(users),101(netdev)
+
+$ getent hosts deb.debian.org   (conectividad a los repositorios)
+2a04:4e42:34::644 debian.map.fastlydns.net deb.debian.org

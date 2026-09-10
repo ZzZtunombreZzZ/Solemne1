@@ -1,0 +1,13 @@
+INFORME DE ESTACIÓN AMBIENTAL
+Archivo procesado: estacion_VAL01_20240101.jsonl
+Estación: VAL01
+Fecha del archivo: 2024-01-01
+Líneas leídas: 16
+Mediciones válidas: 15
+Mediciones inválidas: 1
+Temperatura promedio: 21.15 °C
+Humedad promedio: 58.05 %
+PM2.5 máximo: 177.87 ug/m3
+Ruido máximo: 65.75 dB
+Alertas detectadas: 3
+Primera alerta: 2024-01-01T12:24:36

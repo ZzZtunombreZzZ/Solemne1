@@ -1,0 +1,50 @@
+########################################################################
+# Configuracion real de la maquina virtual en Microsoft Hyper-V        #
+# Salida de los cmdlets de Hyper-V en el equipo anfitrion              #
+########################################################################
+
+PS] Get-VM -Name Debian-SO-Equipo07
+Name            : Debian-SO-Equipo07
+State           : Running
+Generation      : 1
+ProcessorCount  : 4
+MemoryStartupGB : 4
+Uptime          : 01:19:53.3350000
+
+PS] Get-VMMemory -VMName Debian-SO-Equipo07
+DynamicMemoryEnabled : False
+StartupGB            : 4
+
+PS] Get-VMHardDiskDrive -VMName Debian-SO-Equipo07 | Get-VHD
+Path       : D:\HyperV\Solemne1\Debian-SO-Equipo07.vhdx
+VhdType    : Dynamic
+SizeGB     : 25
+FileSizeGB : 3
+
+PS] Get-VMNetworkAdapter -VMName Debian-SO-Equipo07
+Name        : Adaptador de red
+SwitchName  : Default Switch
+MacAddress  : 00155D647F07
+IPAddresses : 172.22.205.178, fe80::4b96:a2fc:fef3:c53c
+
+PS] Get-VMSwitch -Name 'Default Switch'
+Name       : Default Switch
+SwitchType : Internal
+El Default Switch de Hyper-V provee NAT con DHCP hacia la red 172.22.192.0/20.
+
+PS] Get-VMBios -VMName Debian-SO-Equipo07   (orden de arranque)
+StartupOrder : IDE , CD , LegacyNetworkAdapter , Floppy
+
+PS] Get-VMDvdDrive -VMName Debian-SO-Equipo07
+Path : (vacia: el ISO fue expulsado tras la instalacion)
+
+########################################################################
+# Integridad del medio de instalacion                                  #
+########################################################################
+
+PS] Get-FileHash debian-13.6.0-amd64-netinst.iso -Algorithm SHA256
+Hash calculado : 65273beed27b2df543b68b65630ba525cfbad8df2b12035732b2dff87d6664e7
+Hash publicado : 65273beed27b2df543b68b65630ba525cfbad8df2b12035732b2dff87d6664e7
+  Fuente: SHA256SUMS de cdimage.debian.org/debian-cd/current/amd64/iso-cd/
+Coincide       : SI
+Tamano         : 755 MB

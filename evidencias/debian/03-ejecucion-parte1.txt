@@ -1,0 +1,126 @@
+########################################################################
+# Pauta Parte 2, punto 2.c) - Ejecutar la Parte 1 en Debian            #
+########################################################################
+
+Directorio: /home/equipo07/solemne_so_equipo07   |   Python 3.13.5
+
+=== 1. Generacion del conjunto de entrada ===
+$ python3 scripts/generar_archivos_entrada.py
+==============================================================================
+GENERACIÓN DE ARCHIVOS DE ENTRADA
+==============================================================================
+Carpeta de salida: /home/equipo07/solemne_so_equipo07/entrada
+Semilla fija: 20240908 (resultados reproducibles entre corridas y sistemas)
+Archivos generados: 20
+
+ARCHIVO                             MED  HORAS  ALERTAS CATEGORÍA    LÍNEA INVÁLIDA
+------------------------------------------------------------------------------
+estacion_STG01_20240101.jsonl        15      8        1 con_alertas  json_malformado
+estacion_STG02_20240101.jsonl        15      8        5 criticas     atributo_ausente
+estacion_STG03_20240101.jsonl        15      8        2 con_alertas  estacion_inconsistente
+estacion_STG04_20240101.jsonl        15      8        6 criticas     valor_fuera_rango
+estacion_VAL01_20240101.jsonl        15      8        3 con_alertas  tipo_incorrecto
+estacion_VAL02_20240101.jsonl        15      8        4 criticas     json_malformado
+estacion_VAL03_20240101.jsonl        15      8        1 con_alertas  atributo_ausente
+estacion_VAL04_20240101.jsonl        15      8        7 criticas     estacion_inconsistente
+estacion_CON01_20240101.jsonl        15      8        2 con_alertas  valor_fuera_rango
+estacion_CON02_20240101.jsonl        15      8        4 criticas     tipo_incorrecto
+estacion_CON03_20240101.jsonl        15      8        3 con_alertas  json_malformado
+estacion_CON04_20240101.jsonl        15      8        5 criticas     atributo_ausente
+estacion_PUN01_20240101.jsonl        15      8        2 con_alertas  estacion_inconsistente
+estacion_PUN02_20240101.jsonl        15      8        6 criticas     valor_fuera_rango
+estacion_PUN03_20240101.jsonl        15      8        1 con_alertas  tipo_incorrecto
+estacion_PUN04_20240101.jsonl        15      8        4 criticas     json_malformado
+estacion_STG01_20240102.jsonl        15      8        8 criticas     atributo_ausente
+estacion_STG02_20240102.jsonl        15      8        5 criticas     estacion_inconsistente
+estacion_STG03_20240102.jsonl        15      8        4 criticas     valor_fuera_rango
+estacion_STG04_20240102.jsonl        15      8        6 criticas     tipo_incorrecto
+------------------------------------------------------------------------------
+CLASIFICACIÓN ESPERADA EN gestion_ambiental/
+  sin_alertas/  : 0 informes  (la pauta exige al menos una alerta por archivo,
+                              por eso esta rama queda legítimamente vacía)
+  con_alertas/  : 8 informes (1 a 3 alertas)
+  criticas/     : 12 informes (4 o más alertas)
+  Alertas totales esperadas: 79
+
+LÍNEAS INVÁLIDAS REPARTIDAS (una por archivo)
+  json_malformado         : 4 archivos
+  atributo_ausente        : 4 archivos
+  estacion_inconsistente  : 4 archivos
+  valor_fuera_rango       : 4 archivos
+  tipo_incorrecto         : 4 archivos
+==============================================================================
+
+Archivos .jsonl generados: 20
+SHA256 del conjunto de entrada (prueba de que ambas versiones leen lo mismo):
+d4f2b512dd71fd789fe9b2a3c1d0d69ee1bf3f4e8d7c99656dd113dad89b68f2  -
+
+=== 2. VERSION SECUENCIAL ===
+$ time python3 src/secuencial.py
+
+real	0m0.019s
+user	0m0.016s
+sys	0m0.004s
+
+RESUMEN CONSOLIDADO DE MONITOREO AMBIENTAL
+Versión ejecutada: secuencial
+Archivos procesados: 20
+Líneas leídas: 320
+Mediciones válidas: 300
+Mediciones inválidas: 20
+Temperatura promedio global: 23.46 °C
+Humedad promedio global: 54.85 %
+PM2.5 máximo global: 177.87 ug/m3
+Ruido máximo global: 109.77 dB
+Alertas totales: 79
+Estación con mayor cantidad de alertas: STG04
+Tiempo total de ejecución: 0.005 segundos
+Cantidad de trabajadores: 1
+
+Informes individuales generados: 20
+
+=== 3. VERSION CONCURRENTE (esta es la corrida que queda en el entregable) ===
+$ time python3 src/concurrente.py
+
+real	0m0.023s
+user	0m0.024s
+sys	0m0.000s
+
+RESUMEN CONSOLIDADO DE MONITOREO AMBIENTAL
+Versión ejecutada: concurrente
+Archivos procesados: 20
+Líneas leídas: 320
+Mediciones válidas: 300
+Mediciones inválidas: 20
+Temperatura promedio global: 23.46 °C
+Humedad promedio global: 54.85 %
+PM2.5 máximo global: 177.87 ug/m3
+Ruido máximo global: 109.77 dB
+Alertas totales: 79
+Estación con mayor cantidad de alertas: STG04
+Tiempo total de ejecución: 0.007 segundos
+Cantidad de trabajadores: 3
+
+########################################################################
+# 4. CONSISTENCIA EXIGIDA: las 6 metricas deben coincidir              #
+########################################################################
+
+Metrica                       Secuencial          Concurrente         Coincide
+------------------------------------------------------------------------------
+Archivos procesados           20                  20                  SI
+Mediciones validas            300                 300                 SI
+Mediciones invalidas          20                  20                  SI
+Alertas totales               79                  79                  SI
+PM2.5 maximo global           177.87 ug/m3        177.87 ug/m3        SI
+Ruido maximo global           109.77 dB           109.77 dB           SI
+------------------------------------------------------------------------------
+
+RESULTADO: TODAS LAS METRICAS EXIGIDAS COINCIDEN
+
+=== 5. Informes individuales, uno por uno ===
+Informes comparados: 20 | con diferencias: 0
+
+=== 6. Bitacora de alertas ===
+Secuencial : 79 alertas
+Concurrente: 79 alertas
+IDENTICO BYTE A BYTE entre ambas versiones.

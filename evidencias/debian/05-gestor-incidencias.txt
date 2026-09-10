@@ -1,0 +1,236 @@
+########################################################################
+# Pauta Parte 2, punto 2.d) - Gestor de incidencias                    #
+########################################################################
+
+Estado de salida/ ANTES del gestor: 20 informes + resumen
+
+El gestor MUEVE los informes fuera de salida/. La Parte 1 exige conservarlos,
+por eso ya se respaldo salida/ completo en evidencias/salida_parte1/
+  respaldo: 21 archivos
+
+=== Ejecucion (unica) del gestor ===
+$ python3 src/gestor_incidencias.py
+Codigo de salida: 0
+
+########################################################################
+# Estructura generada (find y ls -lah)                                 #
+########################################################################
+
+$ find gestion_ambiental logs -type d | sort
+gestion_ambiental
+gestion_ambiental/alertas_por_indicador
+gestion_ambiental/alertas_por_indicador/humedad
+gestion_ambiental/alertas_por_indicador/pm25
+gestion_ambiental/alertas_por_indicador/ruido
+gestion_ambiental/alertas_por_indicador/temperatura
+gestion_ambiental/con_alertas
+gestion_ambiental/criticas
+gestion_ambiental/sin_alertas
+logs
+
+$ find gestion_ambiental -type f | sort
+gestion_ambiental/alertas_por_indicador/humedad/alertas_humedad.log
+gestion_ambiental/alertas_por_indicador/pm25/alertas_pm25.log
+gestion_ambiental/alertas_por_indicador/ruido/alertas_ruido.log
+gestion_ambiental/alertas_por_indicador/temperatura/alertas_temperatura.log
+gestion_ambiental/con_alertas/informe_CON01_20240101.txt
+gestion_ambiental/con_alertas/informe_CON03_20240101.txt
+gestion_ambiental/con_alertas/informe_PUN01_20240101.txt
+gestion_ambiental/con_alertas/informe_PUN03_20240101.txt
+gestion_ambiental/con_alertas/informe_STG01_20240101.txt
+gestion_ambiental/con_alertas/informe_STG03_20240101.txt
+gestion_ambiental/con_alertas/informe_VAL01_20240101.txt
+gestion_ambiental/con_alertas/informe_VAL03_20240101.txt
+gestion_ambiental/criticas/informe_CON02_20240101.txt
+gestion_ambiental/criticas/informe_CON04_20240101.txt
+gestion_ambiental/criticas/informe_PUN02_20240101.txt
+gestion_ambiental/criticas/informe_PUN04_20240101.txt
+gestion_ambiental/criticas/informe_STG01_20240102.txt
+gestion_ambiental/criticas/informe_STG02_20240101.txt
+gestion_ambiental/criticas/informe_STG02_20240102.txt
+gestion_ambiental/criticas/informe_STG03_20240102.txt
+gestion_ambiental/criticas/informe_STG04_20240101.txt
+gestion_ambiental/criticas/informe_STG04_20240102.txt
+gestion_ambiental/criticas/informe_VAL02_20240101.txt
+gestion_ambiental/criticas/informe_VAL04_20240101.txt
+gestion_ambiental/inventario_ambiental.json
+gestion_ambiental/resumen_resguardado.txt
+
+--- Informes clasificados ---
+$ ls -lah gestion_ambiental/sin_alertas | head -4
+total 8.0K
+drwxrwxr-x 2 equipo07 equipo07 4.0K Sep  9 23:29 .
+drwxrwxr-x 6 equipo07 equipo07 4.0K Sep  9 23:29 ..
+  -> 0 informes
+
+$ ls -lah gestion_ambiental/con_alertas | head -4
+total 40K
+drwxrwxr-x 2 equipo07 equipo07 4.0K Sep  9 23:29 .
+drwxrwxr-x 6 equipo07 equipo07 4.0K Sep  9 23:29 ..
+-rw-rw-r-- 1 equipo07 equipo07  363 Sep  9 23:29 informe_CON01_20240101.txt
+  -> 8 informes
+
+$ ls -lah gestion_ambiental/criticas | head -4
+total 56K
+drwxrwxr-x 2 equipo07 equipo07 4.0K Sep  9 23:29 .
+drwxrwxr-x 6 equipo07 equipo07 4.0K Sep  9 23:29 ..
+-rw-rw-r-- 1 equipo07 equipo07  364 Sep  9 23:29 informe_CON02_20240101.txt
+  -> 12 informes
+
+--- Alertas por indicador ---
+  temperatura   21 alertas   (gestion_ambiental/alertas_por_indicador/temperatura/alertas_temperatura.log)
+  humedad       17 alertas   (gestion_ambiental/alertas_por_indicador/humedad/alertas_humedad.log)
+  pm25          20 alertas   (gestion_ambiental/alertas_por_indicador/pm25/alertas_pm25.log)
+  ruido         21 alertas   (gestion_ambiental/alertas_por_indicador/ruido/alertas_ruido.log)
+  ---------------------------------------
+  SUMA de los 4 logs        : 79
+  alertas/alertas_detectadas.log : 79
+  resumen consolidado            : 79
+  inventario_ambiental.json      : 79
+  -> las cuatro fuentes cuadran.
+
+--- Inventario y respaldo del resumen ---
+$ ls -lah gestion_ambiental/inventario_ambiental.json gestion_ambiental/resumen_resguardado.txt
+-rw-rw-r-- 1 equipo07 equipo07 3.1K Sep  9 23:29 gestion_ambiental/inventario_ambiental.json
+-rw-rw-r-- 1 equipo07 equipo07  448 Sep  9 23:29 gestion_ambiental/resumen_resguardado.txt
+
+$ cat gestion_ambiental/inventario_ambiental.json
+{
+    "resumen": {
+        "total_informes": 20,
+        "informes_por_categoria": {
+            "sin_alertas": 0,
+            "con_alertas": 8,
+            "criticas": 12
+        },
+        "total_alertas": 79,
+        "anomalias_registradas": 0,
+        "errores_de_proceso": 0
+    },
+    "informes": {
+        "sin_alertas": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "con_alertas": {
+            "cantidad": 8,
+            "archivos": [
+                "informe_CON01_20240101.txt",
+                "informe_CON03_20240101.txt",
+                "informe_PUN01_20240101.txt",
+                "informe_PUN03_20240101.txt",
+                "informe_STG01_20240101.txt",
+                "informe_STG03_20240101.txt",
+                "informe_VAL01_20240101.txt",
+                "informe_VAL03_20240101.txt"
+            ]
+        },
+        "criticas": {
+            "cantidad": 12,
+            "archivos": [
+                "informe_CON02_20240101.txt",
+                "informe_CON04_20240101.txt",
+                "informe_PUN02_20240101.txt",
+                "informe_PUN04_20240101.txt",
+                "informe_STG01_20240102.txt",
+                "informe_STG02_20240101.txt",
+                "informe_STG02_20240102.txt",
+                "informe_STG03_20240102.txt",
+                "informe_STG04_20240101.txt",
+                "informe_STG04_20240102.txt",
+                "informe_VAL02_20240101.txt",
+                "informe_VAL04_20240101.txt"
+            ]
+        }
+    },
+    "alertas_por_indicador": {
+        "temperatura": {
+            "cantidad": 21,
+            "log": "gestion_ambiental/alertas_por_indicador/temperatura/alertas_temperatura.log"
+        },
+        "humedad": {
+            "cantidad": 17,
+            "log": "gestion_ambiental/alertas_por_indicador/humedad/alertas_humedad.log"
+        },
+        "pm25": {
+            "cantidad": 20,
+            "log": "gestion_ambiental/alertas_por_indicador/pm25/alertas_pm25.log"
+        },
+        "ruido": {
+            "cantidad": 21,
+            "log": "gestion_ambiental/alertas_por_indicador/ruido/alertas_ruido.log"
+        }
+    },
+    "total_alertas": 79,
+    "anomalias": {
+        "total": 0,
+        "alertas_invalidas": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "indicadores_desconocidos": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "informes_sin_dato_de_alertas": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "archivos_ignorados_en_salida": {
+            "cantidad": 0,
+            "archivos": []
+        },
+        "lineas_con_bytes_corruptos": {
+            "cantidad": 0,
+            "ejemplos": []
+        },
+        "advertencias_de_origen": {
+            "cantidad": 0,
+            "detalles": []
+        },
+        "errores_de_proceso": {
+            "cantidad": 0,
+            "detalles": []
+        }
+    },
+    "resumen_resguardado": {
+        "existe": true,
+        "ruta": "gestion_ambiental/resumen_resguardado.txt"
+    },
+    "bitacora": "logs/gestion_ambiental.log",
+    "marca_de_ejecucion": "2026-09-09 23:29:11"
+}
+
+JSON valido. Claves: ['resumen', 'informes', 'alertas_por_indicador', 'total_alertas', 'anomalias', 'resumen_resguardado', 'bitacora', 'marca_de_ejecucion']
+
+--- MOVER contra COPIAR ---
+  salida/resumen_ambiental.txt sigue existiendo : SI
+  identico a resumen_resguardado.txt            : SI
+  informes que quedan en salida/                : 0  (se MOVIERON)
+
+########################################################################
+# Metadatos de la bitacora (stat)                                      #
+########################################################################
+
+$ stat logs/gestion_ambiental.log
+  File: logs/gestion_ambiental.log
+  Size: 2442      	Blocks: 8          IO Block: 4096   regular file
+Device: 8,1	Inode: 1046636     Links: 1
+Access: (0664/-rw-rw-r--)  Uid: ( 1000/equipo07)   Gid: ( 1000/equipo07)
+Access: 2026-09-09 23:29:11.762321294 -0300
+Modify: 2026-09-09 23:29:11.766321401 -0300
+Change: 2026-09-09 23:29:11.766321401 -0300
+ Birth: 2026-09-09 23:29:11.762321294 -0300
+
+$ ls -lah logs/gestion_ambiental.log
+-rw-rw-r-- 1 equipo07 equipo07 2.4K Sep  9 23:29 logs/gestion_ambiental.log
+
+Lineas de la bitacora: 28
+
+--- Cierre de la bitacora ---
+[2026-09-09 23:29:11] Informes movidos en esta corrida: 20
+[2026-09-09 23:29:11] Logs por indicador reconstruidos de forma atomica
+[2026-09-09 23:29:11] Alertas distribuidas por indicador: 79
+[2026-09-09 23:29:11] Inventario generado en gestion_ambiental/inventario_ambiental.json: 20 informes, 79 alertas.
+[2026-09-09 23:29:11] CONTROL DE ERRORES: no se detectaron anomalias en esta corrida. El procesamiento termino completo.
+[2026-09-09 23:29:11] --- FIN DE GESTION DE INCIDENCIAS ---

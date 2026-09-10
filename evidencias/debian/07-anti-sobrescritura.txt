@@ -1,0 +1,28 @@
+########################################################################
+# Pauta Parte 2, punto d.6 - Evitar sobrescritura con _v1, _v2         #
+########################################################################
+
+IMPORTANTE: tambien se ejecuta sobre la COPIA /home/equipo07/demo_destructiva
+
+Informes acumulados al inicio: 21
+  ciclo 1 -> informes acumulados: 41 | con sufijo de version: 20
+  ciclo 2 -> informes acumulados: 61 | con sufijo de version: 40
+
+Ejemplo de convivencia sin perdida:
+-rw-rw-r-- 1 equipo07 equipo07  364 Sep  9 23:29 informe_STG04_20240101.txt
+-rw-rw-r-- 1 equipo07 equipo07  364 Sep  9 23:29 informe_STG04_20240101_v1.txt
+-rw-rw-r-- 1 equipo07 equipo07  364 Sep  9 23:29 informe_STG04_20240101_v2.txt
+
+Comprobacion: 21 iniciales + 20 + 20 = 61 esperados
+              encontrados: 61
+Ningun informe fue sobrescrito ni perdido.
+
+########################################################################
+# Idempotencia del gestor                                              #
+########################################################################
+
+  corrida 1 -> alertas por indicador: 79 | inventario: 79
+  corrida 2 -> alertas por indicador: 79 | inventario: 79
+  corrida 3 -> alertas por indicador: 79 | inventario: 79
+
+Las alertas no se duplican y el inventario no queda en ceros.
