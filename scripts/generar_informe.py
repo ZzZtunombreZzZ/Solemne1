@@ -354,6 +354,132 @@ def limpiar(texto):
 
 
 # ---------------------------------------------------------------------------
+# Rios de justificacion
+#
+# El cuerpo del informe va justificado a los dos margenes y esta lleno de rutas
+# y nombres de archivo -scripts/generar_archivos_entrada.py,
+# estacion_CODIGO_AAAAMMDD.jsonl, gestion_ambiental/resumen_resguardado.txt-.
+# Una palabra de esas no cabe casi nunca en el hueco que queda al final de la
+# linea y no se puede partir por ningun sitio, asi que el justificador no tiene
+# mas remedio que repartir todo el sobrante entre los pocos espacios de la
+# linea: salian lineas con huecos entre palabras de tres y cuatro veces lo
+# normal, que el ojo lee como un rio blanco bajando por la columna.
+#
+# La solucion no es tocar el texto sino darle al justificador mas sitios por
+# donde cortar. Una ruta se puede partir despues de una barra o de un guion
+# bajo, y antes del punto de la extension, sin anadir ningun signo y sin que se
+# lea peor -es como se parten las direcciones web-, y eso es lo unico que se
+# hace aqui, en el momento de maquetar. El MODELO del documento no se toca: ni
+# una palabra cambia.
+#
+# Las dos salidas lo aplican por caminos distintos porque cada motor parte las
+# lineas a su manera:
+#
+# - El PDF no lleva ningun caracter nuevo. A reportlab se le ensena a partir
+#   estas palabras (ver rutas_partibles_en_pdf), de modo que el texto extraido
+#   del PDF sigue siendo exactamente el mismo.
+# - El DOCX si lleva un espacio de ancho cero (U+200B) en cada punto de corte:
+#   es el caracter que Word entiende como "aqui se puede partir", no ocupa
+#   nada y no se imprime.
+# ---------------------------------------------------------------------------
+
+# Por debajo de esta longitud una palabra ya cabe en casi cualquier hueco y no
+# es la que provoca el rio; partirla solo anadiria cortes inutiles.
+CORTE_MINIMO = 10
+
+# Una ruta o un nombre de archivo: solo letras sin tilde, cifras y los signos
+# que aparecen en un nombre de archivo. Las palabras del idioma quedan fuera
+# porque llevan tilde o porque no contienen ninguna barra ni guion bajo.
+RUTA_LARGA = re.compile(r"^[A-Za-z0-9][A-Za-z0-9_./\~@+-]*[A-Za-z0-9/]$")
+
+
+def puntos_de_corte(palabra):
+    """Posiciones de una palabra donde se puede partir la linea.
+
+    Devuelve indices i tales que palabra[:i] queda al final de una linea y
+    palabra[i:] empieza la siguiente. Se corta DESPUES de una barra o de un
+    guion bajo -el separador se queda arriba, que es como se parten las
+    direcciones web- y ANTES de un punto, para que la extension viaje entera
+    y la linea no termine en un punto que se leeria como final de frase.
+    Nunca se deja menos de dos caracteres a un lado.
+
+    El corte ante el punto no es un adorno: sin el, la unica division posible
+    de estacion_CODIGO_AAAAMMDD.jsonl dejaba AAAAMMDD.jsonl entero para la
+    linea siguiente, seguian sobrando 66 pt en la primera y el rio se
+    mantenia. Partiendo tambien ahi, lo que sobra baja a 14 pt.
+    """
+    # reportlab puede llegar aqui con bytes o con una subclase de str.
+    if isinstance(palabra, bytes):
+        palabra = palabra.decode("utf-8", "replace")
+    palabra = str(palabra)
+    if len(palabra) < CORTE_MINIMO or not RUTA_LARGA.match(palabra):
+        return []
+    # Sin barra ni guion bajo no es una ruta: es una palabra con un punto
+    # dentro -queue.Queue, threading.Lock- que no conviene partir.
+    if "/" not in palabra and "_" not in palabra and "\\" not in palabra:
+        return []
+    cortes = set()
+    for i, ch in enumerate(palabra):
+        if not (2 <= i <= len(palabra) - 3):
+            continue
+        if ch in "/_\\":
+            cortes.add(i + 1)
+        elif ch == ".":
+            cortes.add(i)
+    return sorted(cortes)
+
+
+def con_puntos_de_corte(texto, marca="\u200b"):
+    """El mismo texto con una marca invisible en cada punto de corte."""
+    salida = []
+    for palabra in re.split(r"(\s+)", texto):
+        cortes = puntos_de_corte(palabra)
+        if cortes:
+            trozos = []
+            anterior = 0
+            for i in cortes:
+                trozos.append(palabra[anterior:i])
+                anterior = i
+            trozos.append(palabra[anterior:])
+            palabra = marca.join(trozos)
+        salida.append(palabra)
+    return "".join(salida)
+
+
+def rutas_partibles_en_pdf():
+    """Ensena a reportlab a partir rutas largas por sus separadores.
+
+    reportlab ya sabe partir una direccion web al final de una linea, y lo hace
+    sin anadir ningun caracter: parte la palabra y sigue en la siguiente. Lo
+    hace desde _uri_split_pairs(), que solo reconoce como partible lo que
+    encaja en su patron de URI -exige esquema o nombre de dominio-, de modo que
+    scripts/generar_archivos_entrada.py no entraba. Aqui se amplia esa unica
+    funcion para que tambien reconozca rutas y nombres de archivo, y se deja
+    intacto todo lo demas: es reportlab quien sigue decidiendo cuando conviene
+    partir y por donde.
+    """
+    from reportlab.platypus import paragraph as _rl
+    if getattr(_rl, "_rutas_partibles", False):
+        return
+    original = _rl._uri_split_pairs
+
+    def parejas(palabra):
+        conocido = original(palabra)
+        if conocido is not None:
+            return conocido
+        cortes = puntos_de_corte(palabra)
+        if not cortes:
+            return None
+        texto = palabra.decode("utf-8", "replace") if isinstance(palabra, bytes)             else str(palabra)
+        # De cabeza mas larga a mas corta: reportlab se queda con la primera
+        # que le quepa, y lo que se busca es aprovechar la linea al maximo.
+        return [(texto[:i], texto[i:]) for i in reversed(cortes)]
+
+    _rl._uri_split_pairs = parejas
+    _rl._rutas_partibles = True
+
+
+# ---------------------------------------------------------------------------
 # Preparacion de imagenes
 # ---------------------------------------------------------------------------
 
@@ -472,6 +598,43 @@ def recortar_consola(origen):
     return destino
 
 
+def recortar_tras_hueco(origen, hueco_min=60, margen=8):
+    """Deja solo el primer bloque de contenido de una captura ya recortada.
+
+    recortar_consola() recorta al rectangulo que contiene TODO lo que no es
+    fondo, y en las pantallas del instalador eso incluye adornos que estan
+    lejos del texto: el menu de 01-menu-instalador-debian13.png termina en la
+    fila 261 de 650 y el resto es fondo azul con el logotipo "debian 13", que
+    no aporta nada al informe pero se lleva un cuarto de la pagina 3.
+
+    En vez de recortar por una fraccion escrita a mano -que dejaria de valer si
+    la captura cambia- se busca el primer hueco vertical de al menos hueco_min
+    pixeles sin contenido y se corta ahi. Asi el criterio es "lo que sigue tras
+    un vacio grande es decoracion, no la misma pantalla de texto", y se ajusta
+    solo al tamano real de cada imagen. Si no hay ningun hueco de ese tamano la
+    imagen se devuelve tal cual.
+    """
+    from PIL import Image
+
+    origen = Path(origen)
+    CACHE_RECORTES.mkdir(parents=True, exist_ok=True)
+    destino = CACHE_RECORTES / ("util-" + origen.name)
+    if destino.exists() and destino.stat().st_mtime >= origen.stat().st_mtime:
+        return destino
+
+    bandas = bandas_de_contenido(origen)
+    corte = None
+    for anterior, siguiente in zip(bandas, bandas[1:]):
+        if siguiente[0] - anterior[1] >= hueco_min:
+            corte = anterior[1]
+            break
+    im = Image.open(origen).convert("RGB")
+    if corte is not None:
+        im = im.crop((0, 0, im.size[0], min(im.size[1], corte + 1 + margen)))
+    im.save(destino)
+    return destino
+
+
 def bandas_de_contenido(ruta, hueco=3, umbral=0.01):
     """Bandas horizontales con contenido de una captura ya recortada.
 
@@ -510,16 +673,26 @@ def bandas_de_contenido(ruta, hueco=3, umbral=0.01):
 def altura_de_linea_px(ruta):
     """Altura, en pixeles, de una linea de texto dentro de una captura.
 
-    Se toma la mediana de las bandas de contenido con tamano de linea de texto
-    (hasta 40 px). Si la captura no tiene al menos tres bandas de ese tipo no
-    es una transcripcion de terminal -por ejemplo el cuadro de progreso del
-    instalador, que es un unico bloque grafico- y se devuelve None: ahi la
-    altura de linea no es la medida que decide si se lee.
+    Se toma la mediana de las bandas de contenido cuyo alto es el de una linea
+    de texto. La horquilla es 8-40 px por los dos extremos:
+
+    - por abajo se descartan las bandas de 2 a 4 px, que NO son texto sino el
+      cursor de bloque, los subrayados y las lineas de separacion. Sin ese
+      filtro, la tira de una sola linea de la Figura 2 -que tiene una banda de
+      texto de 20 px y otra de 4 px del cursor- daba una mediana de 12 px y se
+      colocaba al doble de su tamano correcto.
+    - por arriba se descartan los bloques graficos (barras de progreso,
+      recuadros, logotipos), que no son lineas de texto.
+
+    Basta UNA banda de texto para tener la medida: una captura de una sola
+    linea es tan medible como una transcripcion de veinte. Si no hay ninguna
+    -el cuadro de progreso del instalador es un unico bloque grafico- se
+    devuelve None, y entonces la figura se coloca por densidad pura.
     """
     import statistics
     alturas = sorted(b[1] - b[0] + 1 for b in bandas_de_contenido(ruta)
-                     if (b[1] - b[0] + 1) <= 40)
-    if len(alturas) < 3:
+                     if 8 <= (b[1] - b[0] + 1) <= 40)
+    if not alturas:
         return None
     return statistics.median(alturas)
 
@@ -1263,19 +1436,43 @@ def fig(ruta, pie, alto=None, texto_pt=None):
 def ancho_de_figura(ruta, ancho_util, texto_pt=None):
     """Ancho con que colocar una figura, en las unidades de ancho_util.
 
-    Se parte del ancho de columna completo y solo se reduce si el texto de
-    dentro de la captura fuese a salir mas grande de lo necesario.
+    La figura se coloca por DENSIDAD, no por ancho. Colocar buscando el ancho
+    de columna dejaba resoluciones efectivas dispares -de 72 a 240 dpi- entre
+    capturas vecinas: la de 72 dpi salia dentada y la tira de una sola linea
+    salia estirada de margen a margen, con su letra al doble que la de las
+    figuras de su misma pagina.
+
+    Hay dos formas de fijar la densidad, y se usa la mas informada de las dos:
+
+    1. Si la captura tiene texto medible, se coloca al ancho en que la letra
+       de dentro queda a texto_pt puntos. Esa es la densidad que ve el lector:
+       dos capturas tomadas a resoluciones distintas acaban con la letra del
+       mismo tamano, que es lo que hace homogeneo un bloque de figuras.
+    2. Si no tiene texto medible -un cuadro de progreso, un recuadro grafico-
+       no hay letra que igualar, y se coloca a DPI_DE_CAPTURA puntos por
+       pulgada de imagen.
+
+    Sobre las dos se aplican los mismos dos topes de siempre: el ancho de
+    columna y el tamano nativo. El tope nativo impide el defecto contrario al
+    de encoger: una captura pequena -05-primer-inicio.png son 374x68 px-
+    colocada a ancho de columna completo queda a escala 1.288 y sale
+    visiblemente pixelada. Ampliar no anade informacion a una imagen: solo
+    estira pixeles. La equivalencia usada es un pixel de la imagen = un punto
+    del PDF, que es la misma con la que se calcula ESCALAS, y por eso el tope
+    nativo es exactamente la colocacion a 72 dpi.
     """
     from PIL import Image
     with Image.open(ruta) as im:
         ancho_px = im.size[0]
-    linea_px = altura_de_linea_px(ruta)
-    objetivo = texto_pt if texto_pt is not None else TEXTO_MAXIMO_PT
-    if linea_px is None:
-        return ancho_util
-    deseado = ancho_px * (objetivo / float(linea_px))
     factor = ancho_util / 481.89  # el ancho util del PDF, en las mismas unidades
-    return min(ancho_util, deseado * factor)
+    nativo = ancho_px * factor
+    linea_px = altura_de_linea_px(ruta)
+    if linea_px is None:
+        deseado = ancho_px * (72.0 / DPI_DE_CAPTURA)
+    else:
+        objetivo = texto_pt if texto_pt is not None else TEXTO_DE_CAPTURA_PT
+        deseado = ancho_px * (objetivo / float(linea_px))
+    return min(ancho_util, nativo, deseado * factor)
 
 
 def n_figuras():
@@ -1294,13 +1491,79 @@ def n_figuras():
 ESCALAS = []
 TEXTO_MINIMO_PT = 6.0
 
-# Tope por arriba: ninguna captura necesita que su texto salga mas grande que
-# el del propio informe. Una captura recortada a 544x294 colocada a ancho de
-# columna completo deja su letra en 10.6 pt, mas grande que el cuerpo del
-# documento (9 pt) y casi el doble que sus bloques de transcripcion (6.6 pt);
-# ese exceso solo gasta pagina. Las capturas se colocan a ancho de columna
-# completo salvo que eso pase de este tope.
-TEXTO_MAXIMO_PT = 8.5
+# Tamano al que queda la letra de DENTRO de una captura una vez colocada. Es
+# el de los bloques de transcripcion del propio informe (Courier 6.6 pt): la
+# captura y el bloque de codigo que tiene al lado se leen igual. Queda con
+# holgura por encima del minimo de 6.0 pt, de modo que la legibilidad no
+# depende de este ajuste.
+#
+# Igualar la letra es lo que iguala la densidad APARENTE. Las capturas se
+# tomaron a resoluciones distintas -la linea de una consola mide 12 px en unas
+# y 22 px en otras-, asi que un mismo dpi para todas daria letras de tamanos
+# distintos, que es justo el defecto que se quiere evitar. Fijando la letra, el
+# dpi de cada figura sale derivado: dpi = 72 * linea_px / TEXTO_DE_CAPTURA_PT.
+TEXTO_DE_CAPTURA_PT = 6.2
+
+# Densidad con la que se colocan las capturas SIN texto medible, donde no hay
+# letra que igualar (el cuadro de progreso del instalador). 140 dpi es el punto
+# medio de la horquilla en la que una captura de pantalla ya no se ve dentada y
+# todavia no gasta pagina de mas.
+#
+# Este numero es el suelo de densidad del informe, no su valor unico. Con la
+# regla de la letra, las capturas quedan entre 131 dpi -las de la consola de la
+# maquina, cuya linea mide 12 px- y 240 dpi -las del instalador, cuya linea
+# mide 22 px-. Esa horquilla es inevitable y es la correcta: las capturas se
+# tomaron a resoluciones distintas, y lo que el lector compara no es el dpi
+# sino el tamano de la letra, que si queda igual en todas. Forzar un mismo dpi
+# para las ocho solo se podria hacer sacando la letra de unas al doble que la
+# de otras, o bajando a 3.6 pt las que ahora estan en 6.6, por debajo del
+# minimo legible. Lo que si desaparece es el extremo de 72 dpi, que era el
+# unico que se veia dentado.
+DPI_DE_CAPTURA = 140.0
+
+# ---------------------------------------------------------------------------
+# Reglas de maquetacion compartidas por el PDF y el DOCX
+#
+# LINEAS_CODIGO_JUNTAS: hasta cuantas lineas de transcripcion se mantienen sin
+# partir entre dos paginas. Una linea de codigo ocupa 8.1 pt (Courier 6.6 con
+# interlinea 7.3 mas 0.8 de relleno), asi que 22 lineas son 178 pt: 6.3 cm, la
+# cuarta parte del alto de texto de una A4 (26.6 cm). El limite sale de ahi. Un
+# bloque que quepa en un cuarto de pagina se empuja entero antes que partirse,
+# porque el hueco que deja nunca pasa de ese cuarto; uno mas largo SI se parte,
+# porque empujarlo dejaria media pagina o mas en blanco y ademas reportlab
+# acabaria arrastrandolo de pagina en pagina. Con este umbral, de los 19
+# bloques del informe solo el volcado del inventario (24 lineas) puede partirse.
+#
+# LINEAS_CODIGO_MINIMAS: cuando un bloque largo se parte, cuantas lineas de
+# salida tienen que quedar como minimo junto al comando para que la primera
+# mitad signifique algo. Seis es lo que ocupa la salida corta tipica de este
+# informe: un comando solo al pie de una pagina no es evidencia de nada.
+#
+# FILAS_TABLA_MINIMAS: por debajo de esto una tabla no se considera partible,
+# y se empuja entera antes que dejar una cabecera con una fila colgando.
+# ---------------------------------------------------------------------------
+LINEAS_CODIGO_JUNTAS = 22
+LINEAS_CODIGO_MINIMAS = 6
+FILAS_TABLA_MINIMAS = 3
+
+# Tablas de hasta esta altura (cabecera incluida) no se parten entre paginas.
+# Ocho filas de las tablas de este informe miden unos 4 cm, que es el mismo
+# limite con el que el PDF decide si una tabla se empuja entera o se deja
+# partir. Por encima de eso partirla es preferible: la cabecera se repite y lo
+# que se pierde es menos que la media pagina en blanco que costaria empujarla.
+FILAS_TABLA_JUNTAS = 8
+
+# Que parte del hueco sobrante de la portada va ARRIBA del bloque. El resto va
+# abajo. 0.45 y no 0.5 porque el centro optico de una hoja esta algo por encima
+# del centro geometrico: un bloque repartido al 50 % se ve caido. Las dos
+# salidas usan el mismo numero, que es lo que hace que la portada del PDF y la
+# del DOCX se parezcan.
+ALTO_PORTADA = 0.45
+
+# Alto de la caja de texto de una A4 con los margenes de este informe
+# (29.7 - 1.5 - 1.6 cm), en puntos. El PDF lo obtiene de reportlab; el DOCX no
+# tiene forma de medir, asi que lo necesita escrito.
+ALTO_DE_TEXTO_PT = (29.7 - 1.5 - 1.6) / 2.54 * 72
 
 
 def extracto_inventario(inv):
@@ -1483,10 +1746,10 @@ def construir_documento(d, imgs_hv):
         "UEFI. Se creó el usuario sin privilegios " + d["usuario_vm"] + ", con acceso a "
         "sudo, y el host quedó como " + d["hostname_vm"] + ", de modo que cualquier salida "
         "de este informe se atribuye sin ambigüedad a la máquina del equipo."))
-    b.append(fig(imgs_hv["01-menu-instalador-debian13.png"],
+    b.append(fig(recortar_tras_hueco(imgs_hv["01-menu-instalador-debian13.png"]),
                  "Menú del instalador de Debian 13 en modo BIOS, en la máquina "
                  "de Generación " + hv["generacion"] + " de Hyper-V. Instalación real de "
-                 "la máquina definitiva.", texto_pt=7.0))
+                 "la máquina definitiva.", texto_pt=TEXTO_DE_CAPTURA_PT))
     b.append(fig(imgs_hv["02-linea-de-arranque-preseed.png"],
                  "Línea de arranque del instalador con el archivo de "
                  "preconfiguración (preseed), que fija idioma, teclado, zona horaria, "
@@ -1638,7 +1901,7 @@ def construir_documento(d, imgs_hv):
     # se ampliaria hasta dejar su letra por encima de la del cuerpo del informe
     # y, sobre todo, desbordaria la pagina dejando un tercio en blanco. Se
     # coloca al tamano en que su texto queda a 7.2 pt, por encima del umbral.
-    b.append(fig(captura_7, pie_7, texto_pt=7.2))
+    b.append(fig(captura_7, pie_7, texto_pt=TEXTO_DE_CAPTURA_PT))
 
     # ----------------------------------------------- 5. Gestor de incidencias
     b.append(h1("gestor", "Gestor de incidencias"))
@@ -1711,7 +1974,7 @@ def construir_documento(d, imgs_hv):
                "ejecución sobre el árbol entregado."))
     b.append(fig(recortar_consola(FOTOS / "debian-03-estructura-gestor.png"),
                  "Estructura generada por el gestor y cuadratura de las alertas por "
-                 "indicador, en la máquina virtual.", texto_pt=7.0))
+                 "indicador, en la máquina virtual.", texto_pt=TEXTO_DE_CAPTURA_PT))
 
     b.append(h2("cuadratura", "Inventario y cuadratura de las alertas"))
     b.append(p(
@@ -1880,7 +2143,7 @@ def construir_documento(d, imgs_hv):
                  + FIG_OBSERVACION_PCPU + " frente a los " + d["pcpu_max"]
                  + " transcritos. Coincide en lo que importa: " + d["nlwp"] + " hilos "
                  "vivos, %CPU por encima de 100 y el mismo du -sh de "
-                 + d["du_proyecto"] + " del proyecto.", texto_pt=7.0))
+                 + d["du_proyecto"] + " del proyecto.", texto_pt=TEXTO_DE_CAPTURA_PT))
 
     b.append(h2("memoria_fs",
                 "Memoria del sistema, espacio disponible y tamaño del proyecto"))
@@ -2019,7 +2282,7 @@ def construir_documento(d, imgs_hv):
                  "el resumen CONTROL DE ERRORES de esa misma corrida, es la que corta el "
                  "borde de la consola: no está transcrita en ninguna evidencia, porque la "
                  "corrida archivada en evidencias/debian/06-control-de-errores.txt es la "
-                 "otra.", texto_pt=7.0))
+                 "otra.", texto_pt=TEXTO_DE_CAPTURA_PT))
 
     b.append(h2("anti", "Idempotencia y protección contra sobrescritura"))
     b.append(nota(
@@ -2158,7 +2421,7 @@ def construir_documento(d, imgs_hv):
 def render_docx(bloques, destino):
     from docx import Document
     from docx.enum.section import WD_SECTION
-    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK
+    from docx.enum.text import WD_ALIGN_PARAGRAPH, WD_BREAK, WD_TAB_ALIGNMENT
     from docx.oxml import OxmlElement
     from docx.oxml.ns import qn
     from docx.shared import Cm, Pt, RGBColor
@@ -2193,21 +2456,45 @@ def render_docx(bloques, destino):
         section.footer_distance = Cm(1.0)
         section.different_first_page_header_footer = True
 
-        pie = section.footer.paragraphs[0]
-        pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
-        izq = pie.add_run(limpiar(EVALUACION + "  |  " + EQUIPO + "  |  "
-                                  + SECCION + "  |  Página "))
-        izq.font.size = Pt(8)
-        izq.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        # Mismo pie que el PDF: linea de separacion, identificacion del
+        # trabajo pegada al margen izquierdo y numero de pagina pegado al
+        # derecho. El DOCX ponia antes "Página N de 12" centrado y sin linea,
+        # de modo que los dos archivos de la misma entrega no se parecian
+        # entre si; el criterio elegido es el del PDF.
+        GRIS_PIE = RGBColor(0x6B, 0x72, 0x80)
+
+        # La linea va en un parrafo propio, minimo, y no como borde superior
+        # del parrafo del texto. Puestos en el mismo parrafo, Word deja de
+        # aplicar el tabulador derecho y el numero de pagina se pega al texto
+        # de la izquierda; comprobado convirtiendo el DOCX con el propio Word.
+        raya = section.footer.paragraphs[0]
+        borde = OxmlElement("w:pBdr")
+        arriba = OxmlElement("w:top")
+        arriba.set(qn("w:val"), "single")
+        arriba.set(qn("w:sz"), "4")
+        arriba.set(qn("w:space"), "0")
+        arriba.set(qn("w:color"), "D1D5DB")
+        borde.append(arriba)
+        raya._p.get_or_add_pPr().append(borde)
+        raya.paragraph_format.space_before = Pt(0)
+        raya.paragraph_format.space_after = Pt(0)
+        raya.paragraph_format.line_spacing = Pt(5)
+        raya.add_run("").font.size = Pt(1)
+
+        pie = section.footer.add_paragraph()
+        pie.alignment = WD_ALIGN_PARAGRAPH.LEFT
+        pie.paragraph_format.space_before = Pt(0)
+        pie.paragraph_format.space_after = Pt(0)
+        # El tabulador derecho va al final de la caja de texto (21 - 2 - 2 cm),
+        # que es donde el PDF alinea su "Pagina N".
+        pie.paragraph_format.tab_stops.add_tab_stop(Cm(17.0), WD_TAB_ALIGNMENT.RIGHT)
+        izq = pie.add_run(limpiar(EVALUACION + "  |  " + EQUIPO + "  |  " + SECCION)
+                          + "	" + limpiar("Página "))
+        izq.font.size = Pt(7.6)
+        izq.font.color.rgb = GRIS_PIE
         num = campo(pie, " PAGE ")
-        num.font.size = Pt(8)
-        num.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
-        de = pie.add_run(" de ")
-        de.font.size = Pt(8)
-        de.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
-        tot = campo(pie, " NUMPAGES ")
-        tot.font.size = Pt(8)
-        tot.font.color.rgb = RGBColor(0x6B, 0x72, 0x80)
+        num.font.size = Pt(7.6)
+        num.font.color.rgb = GRIS_PIE
 
     # Metadatos: sin esto el archivo se entrega firmado por "python-docx".
     props = doc.core_properties
@@ -2226,7 +2513,28 @@ def render_docx(bloques, destino):
     normal.font.name = "Calibri"
     normal.font.size = Pt(10)
     normal.paragraph_format.space_after = Pt(5)
-    normal.paragraph_format.line_spacing = 1.06
+    # 1.04 y no 1.06: con 1.06 el documento se iba tres centimetros a una
+    # decimotercera hoja que quedaba practicamente vacia. Calibri 10 con
+    # interlineado sencillo ya deja 12.2 pt de linea, de modo que el texto
+    # sigue teniendo el mismo aire que el del PDF.
+    normal.paragraph_format.line_spacing = 1.04
+    # El equivalente en Word de allowWidows/allowOrphans del PDF: ninguna linea
+    # suelta de un parrafo se queda al pie ni abre la pagina siguiente.
+    normal.paragraph_format.widow_control = True
+
+    def justificable(texto):
+        """Texto de prosa listo para justificar sin abrir rios.
+
+        Word no parte por si solo scripts/generar_archivos_entrada.py ni
+        estacion_CODIGO_AAAAMMDD.jsonl, asi que reparte todo el sobrante de la
+        linea entre los espacios y abre el rio. El espacio de ancho cero
+        U+200B es el caracter con el que se le dice "aqui puedes partir": no
+        ocupa nada, no se imprime y no cambia ni una letra del texto.
+
+        Va DESPUES de limpiar(), que sustituye por "?" todo lo que pase de
+        U+00FF y se llevaria por delante la marca.
+        """
+        return con_puntos_de_corte(limpiar(texto))
 
     def sombrear(par, color="F2F3F5"):
         pr = par._p.get_or_add_pPr()
@@ -2247,12 +2555,68 @@ def render_docx(bloques, destino):
         bordes.append(left)
         pr.append(bordes)
 
+    def pegar(par):
+        """Ata un parrafo al siguiente: el equivalente de keepWithNext.
+
+        Es lo que impide que un titulo -o un parrafo que anuncia con dos
+        puntos lo que viene detras- se quede solo al pie de una hoja, y lo que
+        mantiene una figura con su pie y un comando con su salida.
+        """
+        par.paragraph_format.keep_with_next = True
+        return par
+
+    def respirar(puntos=5):
+        """Separacion despues de un bloque o de una tabla.
+
+        Un parrafo vacio del estilo normal mide una linea entera -unos 14 pt-
+        aunque no lleve nada escrito, y el documento gastaba asi mas de diez
+        centimetros repartidos entre los 19 bloques de transcripcion y las 8
+        tablas. Con una fuente diminuta el mismo parrafo mide lo que se le pida
+        y la separacion queda igual a la del PDF.
+        """
+        par = doc.add_paragraph()
+        par.paragraph_format.space_before = Pt(0)
+        par.paragraph_format.space_after = Pt(0)
+        par.paragraph_format.line_spacing = 1.0
+        par.add_run("").font.size = Pt(puntos)
+        return par
+
+    def entera(tab):
+        """Cabecera repetida en cada pagina y filas que no se parten.
+
+        Una tabla que cruza una pagina se sigue leyendo si la cabecera vuelve a
+        salir arriba; lo que no se lee es una fila cortada por la mitad. Y una
+        tabla corta no debe cruzar nada: se ata fila con fila para que viaje
+        entera, que es lo que hace el PDF con las que caben en 4 cm.
+        """
+        filas = tab.rows
+        corta = len(filas) <= FILAS_TABLA_JUNTAS
+        for i, fila in enumerate(filas):
+            pr = fila._tr.get_or_add_trPr()
+            pr.append(OxmlElement("w:cantSplit"))
+            if i == 0:
+                pr.append(OxmlElement("w:tblHeader"))
+            if corta and i < len(filas) - 1:
+                for celda in fila.cells:
+                    pegar(celda.paragraphs[-1])
+        return tab
+
     for blk in bloques:
         t = blk["t"]
 
         if t == "portada":
-            for _ in range(3):
-                doc.add_paragraph()
+            # El bloque se centra en la hoja igual que en el PDF. Los tres
+            # parrafos vacios de antes lo dejaban terminando cerca de la mitad
+            # de la pagina, con media hoja en blanco debajo, y ademas no se
+            # parecia a la portada del PDF.
+            #
+            # Word no deja medir un parrafo, asi que el alto del bloque se
+            # calcula: cada linea mide su cuerpo por 1.2 -la proporcion con la
+            # que Word compone una linea sencilla- por el interlineado 1.04 de
+            # este documento, mas la separacion que lleve debajo.
+            hueco = doc.add_paragraph()
+            alto = [0.0]
+
             def centrado(texto, size, negrita=False, color=None, espacio=6):
                 par = doc.add_paragraph()
                 par.alignment = WD_ALIGN_PARAGRAPH.CENTER
@@ -2262,7 +2626,9 @@ def render_docx(bloques, destino):
                 run.bold = negrita
                 if color:
                     run.font.color.rgb = RGBColor(*color)
+                alto[0] += size * 1.2 * 1.04 + espacio
                 return par
+
             centrado(UNIVERSIDAD, 16, True)
             centrado(ASIGNATURA, 13, False, espacio=24)
             centrado(EVALUACION, 20, True, (0x1F, 0x3A, 0x5F))
@@ -2272,53 +2638,88 @@ def render_docx(bloques, destino):
             centrado("Integrantes", 11.5, True, espacio=4)
             for nombre in INTEGRANTES:
                 centrado(nombre, 11, False, espacio=2)
-            doc.add_paragraph()
-            centrado(FECHA, 11)
+            separador = doc.add_paragraph()
+            separador.paragraph_format.space_after = Pt(0)
+            separador.add_run("").font.size = Pt(10)
+            alto[0] += 10 * 1.2 * 1.04
+            centrado(FECHA, 11, espacio=0)
+            # El parrafo de arriba se estira hasta la parte del hueco que le
+            # toca. line_spacing en puntos fija el alto exacto de la linea.
+            hueco.paragraph_format.space_before = Pt(0)
+            hueco.paragraph_format.space_after = Pt(0)
+            hueco.add_run("").font.size = Pt(1)
+            hueco.paragraph_format.line_spacing = Pt(
+                max(1.0, (ALTO_DE_TEXTO_PT - alto[0]) * ALTO_PORTADA))
 
         elif t == "salto":
             par = doc.add_paragraph()
             par.add_run().add_break(WD_BREAK.PAGE)
 
         elif t == "h1":
-            par = doc.add_paragraph()
-            par.paragraph_format.space_before = Pt(4)
-            par.paragraph_format.space_after = Pt(8)
+            # Mismo criterio que el PDF: el titulo pertenece a lo que viene
+            # DEBAJO, asi que lleva mucho aire encima y casi ninguno debajo.
+            # Word SUMA los dos espacios de parrafos contiguos (a diferencia
+            # de reportlab, que se queda con el mayor), de modo que encima de
+            # un h1 quedan estos 12 pt mas los 5 del parrafo anterior.
+            par = pegar(doc.add_paragraph())
+            par.paragraph_format.space_before = Pt(12)
+            par.paragraph_format.space_after = Pt(1.5)
             run = par.add_run(limpiar(blk["x"]))
             run.bold = True
             run.font.size = Pt(15)
             run.font.color.rgb = RGBColor(0x1F, 0x3A, 0x5F)
 
         elif t == "h2":
-            par = doc.add_paragraph()
-            par.paragraph_format.space_before = Pt(8)
-            par.paragraph_format.space_after = Pt(4)
+            par = pegar(doc.add_paragraph())
+            par.paragraph_format.space_before = Pt(9)
+            par.paragraph_format.space_after = Pt(1)
             run = par.add_run(limpiar(blk["x"]))
             run.bold = True
             run.font.size = Pt(11.5)
             run.font.color.rgb = RGBColor(0x2E, 0x5A, 0x88)
 
         elif t == "p":
-            par = doc.add_paragraph(limpiar(blk["x"]))
-            par.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            par = doc.add_paragraph(justificable(blk["x"]))
+            par.alignment = WD_ALIGN_PARAGRAPH.LEFT
+            if blk["x"].rstrip().endswith(":"):
+                pegar(par)
 
         elif t in ("ul", "ol"):
             estilo = "List Bullet" if t == "ul" else "List Number"
             for item in blk["x"]:
-                par = doc.add_paragraph(limpiar(item), style=estilo)
-                par.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+                par = doc.add_paragraph(justificable(item), style=estilo)
+                par.alignment = WD_ALIGN_PARAGRAPH.LEFT
                 par.paragraph_format.space_after = Pt(3)
 
         elif t == "code":
-            if blk["cmd"]:
+            # Una linea del comando por parrafo, igual que en el PDF: metidas
+            # todas en un solo run, Word convierte los saltos en espacios y un
+            # comando de cinco lineas salia escrito de corrido.
+            cmd = limpiar(blk["cmd"]).splitlines() if blk["cmd"] else []
+            salida = limpiar(blk["x"]).splitlines() or [""]
+            # Mismo criterio que el PDF: hasta LINEAS_CODIGO_JUNTAS el bloque
+            # no se parte, y si es mas largo se garantiza que el comando se
+            # lleve consigo al menos LINEAS_CODIGO_MINIMAS lineas de salida.
+            total = len(cmd) + len(salida)
+            if total <= LINEAS_CODIGO_JUNTAS:
+                juntas = total
+            else:
+                juntas = len(cmd) + LINEAS_CODIGO_MINIMAS
+            escritas = 0
+            for linea in cmd:
                 par = doc.add_paragraph()
                 par.paragraph_format.space_after = Pt(0)
-                par.paragraph_format.space_before = Pt(4)
+                par.paragraph_format.space_before = Pt(4) if not escritas else Pt(0)
+                par.paragraph_format.line_spacing = 1.0
                 sombrear(par, "E8EAED")
-                run = par.add_run(limpiar(blk["cmd"]))
+                run = par.add_run(linea)
                 run.font.name = "Consolas"
                 run.font.size = Pt(7.5)
                 run.bold = True
-            for linea in limpiar(blk["x"]).splitlines() or [""]:
+                escritas += 1
+                if escritas < juntas:
+                    pegar(par)
+            for linea in salida:
                 par = doc.add_paragraph()
                 par.paragraph_format.space_after = Pt(0)
                 par.paragraph_format.line_spacing = 1.0
@@ -2326,18 +2727,21 @@ def render_docx(bloques, destino):
                 run = par.add_run(linea)
                 run.font.name = "Consolas"
                 run.font.size = Pt(7.5)
-            doc.add_paragraph().paragraph_format.space_after = Pt(2)
+                escritas += 1
+                if escritas < juntas:
+                    pegar(par)
+            respirar()
 
         elif t == "nota":
             par = doc.add_paragraph()
-            par.alignment = WD_ALIGN_PARAGRAPH.JUSTIFY
+            par.alignment = WD_ALIGN_PARAGRAPH.LEFT
             par.paragraph_format.left_indent = Cm(0.3)
             par.paragraph_format.space_before = Pt(6)
             par.paragraph_format.space_after = Pt(8)
             sombrear(par, "FBF3E2")
             borde_izquierdo(par, "B7791F")
-            run = par.add_run(limpiar(blk["x"]))
-            run.font.size = Pt(10)
+            run = par.add_run(justificable(blk["x"]))
+            run.font.size = Pt(9.5)
 
         elif t == "tabla":
             tab = doc.add_table(rows=1, cols=len(blk["head"]))
@@ -2346,18 +2750,18 @@ def render_docx(bloques, destino):
             for i, texto in enumerate(blk["head"]):
                 hdr[i].text = ""
                 par = hdr[i].paragraphs[0]
-                par.paragraph_format.space_after = Pt(2)
+                par.paragraph_format.space_after = Pt(1)
                 run = par.add_run(limpiar(texto))
                 run.bold = True
-                run.font.size = Pt(8.5)
+                run.font.size = Pt(8)
             for fila in blk["rows"]:
                 celdas = tab.add_row().cells
                 for i, texto in enumerate(fila):
                     celdas[i].text = ""
                     par = celdas[i].paragraphs[0]
-                    par.paragraph_format.space_after = Pt(2)
+                    par.paragraph_format.space_after = Pt(1)
                     run = par.add_run(limpiar(str(texto)))
-                    run.font.size = Pt(8)
+                    run.font.size = Pt(7.5)
             if blk.get("w"):
                 total = sum(blk["w"])
                 disponible = 17.0
@@ -2365,7 +2769,8 @@ def render_docx(bloques, destino):
                     cm = Cm(ancho / total * disponible)
                     for fila in tab.rows:
                         fila.cells[i].width = cm
-            doc.add_paragraph().paragraph_format.space_after = Pt(2)
+            entera(tab)
+            respirar()
 
         elif t == "fig":
             from PIL import Image
@@ -2378,19 +2783,43 @@ def render_docx(bloques, destino):
             if tope is not None and alto > tope:
                 alto = tope
                 ancho = alto * ancho_px / alto_px
-            par = doc.add_paragraph()
+            # El pie cierra su figura: pegado a la imagen por arriba (0 pt) y
+            # separado del bloque siguiente por abajo (10 pt). Sumando los 5 pt
+            # del parrafo anterior, encima de la figura quedan 9 pt: menos que
+            # los 10 que quedan debajo del pie, que es lo que agrupa el
+            # conjunto figura+pie y lo separa de lo que venga despues.
+            par = pegar(doc.add_paragraph())
             par.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            par.paragraph_format.space_after = Pt(2)
+            par.paragraph_format.space_before = Pt(4)
+            par.paragraph_format.space_after = Pt(0)
             par.add_run().add_picture(ruta, width=Cm(ancho))
             pie = doc.add_paragraph()
             pie.alignment = WD_ALIGN_PARAGRAPH.CENTER
-            pie.paragraph_format.space_after = Pt(8)
+            pie.paragraph_format.space_before = Pt(0)
+            pie.paragraph_format.space_after = Pt(10)
             run = pie.add_run(limpiar(blk["pie"]))
             run.italic = True
-            run.font.size = Pt(8.5)
+            run.font.size = Pt(7.5)
 
         else:
             morir("bloque desconocido en el modelo: %r" % t)
+
+    # Igual que los Spacer colgantes del PDF: un parrafo vacio detras del
+    # ultimo bloque basta para que Word abra una hoja mas y la deje con el pie
+    # de pagina y nada mas. Se quitan todos los que queden al final.
+    while doc.paragraphs:
+        ultimo = doc.paragraphs[-1]
+        if ultimo.text.strip() or ultimo._p.findall(qn("w:r") + "/" + qn("w:drawing")):
+            break
+        ultimo._p.getparent().remove(ultimo._p)
+
+    # Word EXIGE un parrafo detras de una tabla final y lo pone el solo si no
+    # esta: con el estilo normal mide 17 pt y se llevaba una hoja entera para
+    # el solo. Se pone aqui uno propio, del tamano minimo, que cabe en lo que
+    # queda de la ultima pagina.
+    if len(doc.element.body) and doc.element.body[-2].tag == qn("w:tbl"):
+        cierre = respirar(1)
+        cierre.paragraph_format.line_spacing = Pt(2)
 
     destino.parent.mkdir(parents=True, exist_ok=True)
     doc.save(str(destino))
@@ -2402,13 +2831,13 @@ def render_docx(bloques, destino):
 
 def render_pdf(bloques, destino):
     from reportlab.lib import colors
-    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY
+    from reportlab.lib.enums import TA_CENTER, TA_JUSTIFY, TA_LEFT
     from reportlab.lib.pagesizes import A4
     from reportlab.lib.styles import ParagraphStyle, getSampleStyleSheet
     from reportlab.lib.units import cm
-    from reportlab.platypus import (BaseDocTemplate, Frame, Image, KeepTogether,
-                                    PageBreak, PageTemplate, Paragraph, Spacer,
-                                    Table, TableStyle)
+    from reportlab.platypus import (BaseDocTemplate, CondPageBreak, Frame, Image,
+                                    KeepTogether, PageBreak, PageTemplate,
+                                    Paragraph, Spacer, Table, TableStyle)
     from xml.sax.saxutils import escape
 
     AZUL = colors.HexColor("#1F3A5F")
@@ -2420,28 +2849,83 @@ def render_pdf(bloques, destino):
 
     base = getSampleStyleSheet()
     S = {}
+    # allowWidows=0 impide que la ultima linea de un parrafo se quede sola al
+    # principio de la pagina siguiente; allowOrphans=0 (el valor por omision de
+    # reportlab) impide lo simetrico, una primera linea sola al pie.
+    #
+    # uriWasteReduce es el interruptor con el que reportlab permite partir una
+    # palabra "de tipo direccion" cuando no cabe entera al final de la linea.
+    # El numero es cuanta linea esta dispuesto a desperdiciar ANTES de partir:
+    # 0.05 significa "si queda mas de un 5 % de linea libre, parte en vez de
+    # estirar los espacios", que es justo lo que mata los rios. Va solo en los
+    # estilos de prosa justificada; los bloques de transcripcion y las tablas
+    # no lo llevan y siguen exactamente igual que antes.
+    rutas_partibles_en_pdf()
+    # ALINEACION: bandera a la izquierda, no justificado a ambos lados.
+    # Este informe cita rutas largas e indivisibles (gestion_ambiental/,
+    # salida/resumen_ambiental.txt, alertas_por_indicador/). Justificando, el
+    # motor solo puede repartir el sobrante en los espacios entre palabras y
+    # aparecen "rios": lineas con blancos de dos a diez veces lo normal, que se
+    # ven antes de leerlas. Se probaron puntos de corte invisibles dentro de las
+    # rutas y bajaron el efecto, pero no lo eliminaron. Con bandera a la
+    # izquierda el espacio entre palabras es constante y el sobrante se va al
+    # margen derecho, que es donde no molesta. Es ademas lo habitual en
+    # documentacion tecnica con rutas y codigo.
     S["p"] = ParagraphStyle("p", parent=base["BodyText"], fontName="Helvetica",
-                            fontSize=9.0, leading=10.9, alignment=TA_JUSTIFY,
-                            spaceAfter=3.5)
+                            fontSize=9.0, leading=10.9, alignment=TA_LEFT,
+                            spaceAfter=3.5, allowWidows=0, allowOrphans=0,
+                            uriWasteReduce=0.05)
+    # keepWithNext deja constancia de la intencion en el propio estilo, pero no
+    # basta: reportlab solo lo encadena con UN flowable y ademas se rinde si el
+    # siguiente es un Spacer, que es justo lo que abre un bloque de codigo, una
+    # tabla o una nota. El agrupado real lo hace agrupar_unidades() mas abajo.
+    # Un titulo pertenece a lo que viene DESPUES, y el espacio en blanco es lo
+    # unico que se lo dice al lector. Antes el reparto estaba casi al reves:
+    # el h1 tenia 6 pt encima y 5 debajo, y el h2 6 y 2.5, de modo que "5.2
+    # Inventario y cuadratura de las alertas" y "6.5 Memoria del sistema..."
+    # -los dos vienen justo detras del pie de una figura- se agrupaban con la
+    # figura de arriba en vez de con el texto que anuncian. Ahora el
+    # spaceBefore es varias veces el spaceAfter en los dos niveles.
+    #
+    # reportlab NO suma los dos espacios: el hueco real entre dos flowables es
+    # max(spaceAfter del anterior, spaceBefore del siguiente). Por eso subir el
+    # spaceBefore de un titulo solo se nota frente a lo que tenga menos
+    # spaceAfter que el; frente al pie de una figura, que deja 10, el hueco de
+    # encima lo pone el pie. Con 10 y 7 el hueco de encima es de 10 pt en todos
+    # los casos, contra 1.5 y 0.5 pt por debajo.
     S["h1"] = ParagraphStyle("h1", parent=S["p"], fontName="Helvetica-Bold",
                              fontSize=13, leading=15.5, textColor=AZUL,
-                             spaceBefore=3, spaceAfter=5, alignment=0)
+                             spaceBefore=10, spaceAfter=1.5, alignment=0,
+                             keepWithNext=1)
     S["h2"] = ParagraphStyle("h2", parent=S["p"], fontName="Helvetica-Bold",
                              fontSize=10.2, leading=12.4, textColor=AZUL2,
-                             spaceBefore=5, spaceAfter=2, alignment=0)
+                             spaceBefore=7, spaceAfter=0.5, alignment=0,
+                             keepWithNext=1)
     S["li"] = ParagraphStyle("li", parent=S["p"], leftIndent=0.55 * cm,
                              bulletIndent=0.15 * cm, spaceAfter=2.5)
+    # uriWasteReduce=0: una transcripcion se parte donde se partia antes. El
+    # informe promete que estos bloques son la salida literal de la maquina, y
+    # cambiar por donde se doblan las lineas largas no es cosa del acabado.
+    # Lo mismo vale para las celdas de tabla y para los pies de figura, que no
+    # van justificados y por tanto no tienen rios que arreglar.
     S["code"] = ParagraphStyle("code", parent=S["p"], fontName="Courier",
                                fontSize=6.6, leading=7.3, alignment=0,
-                               spaceAfter=0, spaceBefore=0)
+                               spaceAfter=0, spaceBefore=0, uriWasteReduce=0)
     S["cmd"] = ParagraphStyle("cmd", parent=S["code"], fontName="Courier-Bold")
     S["nota"] = ParagraphStyle("nota", parent=S["p"], fontSize=8.8, leading=10.9,
                                leftIndent=0.25 * cm, rightIndent=0.15 * cm)
+    # El pie CIERRA su figura, no encabeza la siguiente. Con 2 pt encima y 5
+    # debajo, mas los 2 del espaciador que abre la figura siguiente, quedaban
+    # 7 pt entre un pie y la figura de abajo contra 2 pt entre la figura y su
+    # propio pie: en la pagina de las tres capturas de la instalacion cada pie
+    # se leia como el titulo de la figura siguiente. Ahora el reparto es 0.5 pt
+    # hacia arriba -el pie queda pegado a su imagen- contra 10 pt hacia abajo,
+    # que con el espaciador de la figura siguiente suman 10.5.
     S["pie"] = ParagraphStyle("pie", parent=S["p"], fontName="Helvetica-Oblique",
                               fontSize=7.4, leading=8.7, alignment=TA_CENTER,
-                              spaceBefore=1.5, spaceAfter=4)
+                              spaceBefore=0.5, spaceAfter=10, uriWasteReduce=0)
     S["td"] = ParagraphStyle("td", parent=S["p"], fontSize=7.5, leading=8.6,
-                             spaceAfter=0, alignment=0)
+                             spaceAfter=0, alignment=0, uriWasteReduce=0)
     S["th"] = ParagraphStyle("th", parent=S["td"], fontName="Helvetica-Bold",
                              textColor=colors.white)
     S["portada_u"] = ParagraphStyle("pu", parent=S["p"], alignment=TA_CENTER,
@@ -2461,11 +2945,41 @@ def render_pdf(bloques, destino):
                                     fontSize=10.5, leading=14, spaceAfter=2)
 
     ancho_util = A4[0] - 2 * 2.0 * cm
+    alto_util = A4[1] - 1.5 * cm - 1.6 * cm
+
+    # -----------------------------------------------------------------------
+    # Reglas de maquetacion
+    #
+    # ARRASTRE_TITULO: cuanto contenido tiene que caber DEBAJO de un titulo
+    # para que el titulo se quede en esa pagina. 4.6 cm son unas diez lineas de
+    # cuerpo: suficiente para que el lector vea de que trata la seccion antes
+    # de pasar de hoja. Es tambien el hueco maximo que puede quedar al pie
+    # cuando el titulo se empuja a la pagina siguiente.
+    #
+    # Las cifras de los bloques de transcripcion y de las tablas viven a nivel
+    # de modulo (LINEAS_CODIGO_JUNTAS y companeras), porque el DOCX aplica
+    # exactamente las mismas.
+    # -----------------------------------------------------------------------
+    ARRASTRE_TITULO = 4.0 * cm
 
     def esc(texto):
         return escape(limpiar(texto))
 
     historia = []
+    # Cada bloque del modelo produce una "unidad": la lista de flowables que le
+    # corresponde mas la informacion que hace falta para colocarla sin romperla
+    # (si es indivisible y cuanto mide). Trabajar por unidades y no flowable a
+    # flowable es lo que permite decidir que un titulo viaja con lo que anuncia.
+    unidades = []
+
+    def alto_de(f):
+        """Alto que ocupa un flowable, espaciado propio incluido."""
+        try:
+            _, alto = f.wrap(ancho_util, alto_util)
+            return alto + f.getSpaceBefore() + f.getSpaceAfter()
+        except Exception:
+            return 0.0
+
 
     def pie_pagina(canvas, doc_):
         canvas.saveState()
@@ -2482,21 +2996,34 @@ def render_pdf(bloques, destino):
 
     for blk in bloques:
         t = blk["t"]
+        marca = len(historia)
 
         if t == "portada":
-            historia.append(Spacer(1, 3.6 * cm))
-            historia.append(Paragraph(esc(UNIVERSIDAD), S["portada_u"]))
-            historia.append(Paragraph(esc(ASIGNATURA), S["portada_a"]))
-            historia.append(Paragraph(esc(EVALUACION), S["portada_t"]))
-            historia.append(Paragraph(esc(SUBTITULO), S["portada_s"]))
-            historia.append(Paragraph(esc(EQUIPO + "  -  " + SECCION), S["portada_e"]))
-            historia.append(Paragraph(esc(LENGUAJE), S["portada_n"]))
-            historia.append(Spacer(1, 0.8 * cm))
-            historia.append(Paragraph("<b>" + esc("Integrantes") + "</b>", S["portada_n"]))
+            # El bloque de la portada se centra en la hoja en vez de colgar de
+            # un espaciador fijo. Con los 3.6 cm de antes empezaba a un quinto
+            # de la altura y terminaba a dos tercios, dejando todo el tercio
+            # inferior vacio; la pagina se leia caida hacia arriba.
+            portada = [
+                Paragraph(esc(UNIVERSIDAD), S["portada_u"]),
+                Paragraph(esc(ASIGNATURA), S["portada_a"]),
+                Paragraph(esc(EVALUACION), S["portada_t"]),
+                Paragraph(esc(SUBTITULO), S["portada_s"]),
+                Paragraph(esc(EQUIPO + "  -  " + SECCION), S["portada_e"]),
+                Paragraph(esc(LENGUAJE), S["portada_n"]),
+                Spacer(1, 0.8 * cm),
+                Paragraph("<b>" + esc("Integrantes") + "</b>", S["portada_n"]),
+            ]
             for nombre in INTEGRANTES:
-                historia.append(Paragraph(esc(nombre), S["portada_n"]))
-            historia.append(Spacer(1, 1.0 * cm))
-            historia.append(Paragraph(esc(FECHA), S["portada_n"]))
+                portada.append(Paragraph(esc(nombre), S["portada_n"]))
+            portada.append(Spacer(1, 1.0 * cm))
+            portada.append(Paragraph(esc(FECHA), S["portada_n"]))
+            # ALTO_PORTADA reparte el hueco sobrante entre arriba y abajo. No
+            # es 0.5 sino algo menos, porque el centro optico de una hoja queda
+            # por encima del geometrico: un bloque centrado al milimetro se ve
+            # bajo. Es la misma proporcion que usa el DOCX.
+            historia.append(Spacer(1, max(0.0, (alto_util - sum(alto_de(f) for f in portada))
+                                          * ALTO_PORTADA)))
+            historia.extend(portada)
 
         elif t == "salto":
             historia.append(PageBreak())
@@ -2547,6 +3074,9 @@ def render_pdf(bloques, destino):
                 estilo.append(("BOTTOMPADDING", (0, n_cmd - 1), (-1, n_cmd - 1), 3))
             estilo.append(("BOTTOMPADDING", (0, -1), (-1, -1), 3))
             tab.setStyle(TableStyle(estilo))
+            # Cuantas filas del bloque son el comando: la segunda pasada las
+            # necesita para no dejar nunca un comando sin nada de su salida.
+            tab._lineas_cmd = n_cmd
             historia.append(Spacer(1, 2))
             historia.append(tab)
             historia.append(Spacer(1, 5))
@@ -2581,8 +3111,8 @@ def render_pdf(bloques, destino):
                 ("VALIGN", (0, 0), (-1, -1), "TOP"),
                 ("LEFTPADDING", (0, 0), (-1, -1), 4),
                 ("RIGHTPADDING", (0, 0), (-1, -1), 4),
-                ("TOPPADDING", (0, 0), (-1, -1), 3),
-                ("BOTTOMPADDING", (0, 0), (-1, -1), 3),
+                ("TOPPADDING", (0, 0), (-1, -1), 2.4),
+                ("BOTTOMPADDING", (0, 0), (-1, -1), 2.4),
             ]))
             historia.append(Spacer(1, 3))
             historia.append(tab)
@@ -2610,11 +3140,133 @@ def render_pdf(bloques, destino):
             })
             img = Image(blk["ruta"], width=ancho, height=alto)
             img.hAlign = "CENTER"
-            historia.append(Spacer(1, 2))
-            historia.append(KeepTogether([img, Paragraph(esc(blk["pie"]), S["pie"])]))
+            historia.append(Spacer(1, 0.5))
+            historia.append(img)
+            historia.append(Paragraph(esc(blk["pie"]), S["pie"]))
 
         else:
             morir("bloque desconocido en el modelo: %r" % t)
+
+        flows = historia[marca:]
+        del historia[marca:]
+        if flows:
+            u = {"t": t, "f": flows, "alto": sum(alto_de(f) for f in flows),
+                 "lineas": 0,
+                 # Un parrafo que termina en dos puntos anuncia lo que viene
+                 # detras igual que lo hace un titulo -"la salida es la del
+                 # anfitrion y esta archivada en:"- y se maqueta igual, para
+                 # que no quede solo al pie con su bloque en la hoja siguiente.
+                 "anuncia": t == "p" and blk["x"].rstrip().endswith(":")}
+            tab = next((f for f in flows if isinstance(f, Table)), None)
+            if tab is not None:
+                # alto_de() ya llamo a wrap(), asi que las alturas de fila
+                # reales estan calculadas y se puede medir "cabecera mas tres
+                # filas" o "comando mas seis lineas" en puntos de verdad.
+                alturas = list(getattr(tab, "_rowHeights", None) or [])
+                u["lineas"] = len(tab._cellvalues)
+                if t == "code":
+                    n_min = getattr(tab, "_lineas_cmd", 0) + LINEAS_CODIGO_MINIMAS
+                else:
+                    n_min = 1 + FILAS_TABLA_MINIMAS
+                u["minimo"] = sum(alturas[:n_min]) + 12
+            # "parte" tiene que decir exactamente lo que la colocacion va a
+            # hacer con la unidad, no lo que en abstracto podria hacerse con
+            # ella: si aqui se diera por partible un bloque que luego se coloca
+            # entero, un titulo se quedaria al pie confiando en que el bloque
+            # empezaria debajo, y el bloque se iria completo a la hoja
+            # siguiente dejando el titulo solo, que es el defecto que se
+            # queria evitar.
+            if t == "code":
+                u["parte"] = u["lineas"] > LINEAS_CODIGO_JUNTAS
+            elif t == "tabla":
+                u["parte"] = (u["alto"] > ARRASTRE_TITULO
+                              and u["lineas"] > FILAS_TABLA_MINIMAS)
+            else:
+                u["parte"] = False
+            unidades.append(u)
+
+    # -----------------------------------------------------------------------
+    # Segunda pasada: colocacion
+    # -----------------------------------------------------------------------
+    # Aqui se decide que puede partirse entre paginas y que no. Sin esto un
+    # titulo de seccion podia quedar solo al pie de una hoja con su contenido
+    # en la siguiente, y un comando podia quedar separado de su salida.
+    def agrupar_unidades(unidades):
+        salida = []
+        i = 0
+        n = len(unidades)
+        while i < n:
+            u = unidades[i]
+
+            if u["t"] not in ("h1", "h2") and not u.get("anuncia"):
+                salida.append(u)
+                i += 1
+                continue
+
+            # Un titulo -o un parrafo que termina en dos puntos- arrastra
+            # consigo lo que anuncia: primero los titulos que le sigan (un h1
+            # seguido de su h2) y despues contenido de verdad, hasta llenar
+            # ARRASTRE_TITULO. Se toman unidades enteras mientras quepan; una
+            # unidad que no quepa y que sepa partirse -una tabla larga, una
+            # transcripcion larga- se deja fuera, porque empujarla entera
+            # dejaria mas hueco del que se quiere evitar.
+            grupo = list(u["f"])
+            usado = u["alto"]
+            j = i + 1
+            while j < n and unidades[j]["t"] in ("h1", "h2"):
+                grupo += unidades[j]["f"]
+                usado += unidades[j]["alto"]
+                j += 1
+            arrastradas = 0
+            while j < n:
+                sig = unidades[j]
+                if sig["t"] in ("salto", "portada"):
+                    break
+                cabe = usado + sig["alto"] <= ARRASTRE_TITULO
+                # Aunque no quepa, una unidad indivisible (una figura con su
+                # pie, una nota) se arrastra igualmente si es la primera: dejar
+                # el titulo solo al pie es peor que el hueco que pueda quedar.
+                if not cabe and (arrastradas or sig["parte"]):
+                    break
+                grupo += sig["f"]
+                usado += sig["alto"]
+                arrastradas += 1
+                j += 1
+                if not cabe:
+                    break
+            if arrastradas == 0:
+                # Lo que sigue es una tabla o una transcripcion larga, que sabe
+                # partirse: basta con exigir que el titulo tenga sitio para
+                # empezarla debajo.
+                salida.append({"t": u["t"], "cond": ARRASTRE_TITULO,
+                               "f": grupo, "junto": False})
+            else:
+                salida.append({"t": u["t"], "f": grupo, "junto": True})
+            i = j
+        return salida
+
+    for u in agrupar_unidades(unidades):
+        if u.get("cond"):
+            historia.append(CondPageBreak(u["cond"]))
+        if u.get("junto") or (u["t"] == "fig"):
+            historia.append(KeepTogether(u["f"]))
+        elif u["t"] == "code":
+            # Comando y salida viajan juntos mientras el bloque quepa en un
+            # cuarto de pagina; los mas largos se parten, pero nunca dejando
+            # menos de LINEAS_CODIGO_MINIMAS lineas con el comando.
+            if u["lineas"] <= LINEAS_CODIGO_JUNTAS:
+                historia.append(KeepTogether(u["f"]))
+            else:
+                historia.append(CondPageBreak(u["minimo"]))
+                historia.extend(u["f"])
+        elif u["t"] == "tabla":
+            if u["alto"] <= ARRASTRE_TITULO:
+                historia.append(KeepTogether(u["f"]))
+            else:
+                historia.append(CondPageBreak(u["minimo"]))
+                historia.extend(u["f"])
+        else:
+            historia.extend(u["f"])
 
     # Un Spacer al final del relato hace que reportlab abra una pagina mas y
     # la deje en blanco. Se descartan los espaciadores colgantes.
@@ -2707,9 +3359,10 @@ def main():
         else:
             marca = "   texto %.1f pt  <-- ILEGIBLE" % f["texto_pt"]
             bajas.append(f["n"])
-        print("  Fig %-2d  %-42s %5dx%-5d px -> %5.1f x %-5.1f pt   escala %.3f%s"
+        print("  Fig %-2d  %-42s %5dx%-5d px -> %5.1f x %-5.1f pt   %3d dpi%s"
               % (f["n"], f["ruta"], f["nativo"][0], f["nativo"][1],
-                 f["colocada"][0], f["colocada"][1], f["escala"], marca))
+                 f["colocada"][0], f["colocada"][1],
+                 round(72.0 / f["escala"]), marca))
     if bajas:
         print("  ATENCION: figuras con texto por debajo de %.1f pt: %s"
               % (TEXTO_MINIMO_PT, ", ".join(str(n) for n in bajas)))
