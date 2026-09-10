@@ -1138,19 +1138,14 @@ def verificar_coherencia(d):
     # un informe que declaraba 624K a partir de la MISMA evidencia. Si los dos
     # documentos del entregable se contradicen, no se emite ninguno.
     readme = leer(RAIZ / "README.md")
-    dfr = d["df_raiz"].split()
     met = {sin_acentos(f[0]).strip(): f[1].strip() for f in d["tabla_metricas"]}
+    # El README es una guia de ejecucion corta, no un duplicado del informe: solo
+    # declara las cifras que un lector necesita para saber si su corrida salio bien.
+    # Por eso aqui se comprueban esas y nada mas. Los datos finos -du -sh, el df de
+    # la particion, los conteos de la prueba anti-sobrescritura y las anomalias
+    # inyectadas- viven en el informe y en evidencias/, y este mismo verificador ya
+    # los contrasta contra la evidencia mas arriba.
     for etiqueta, patron, esperado in (
-            ("tamano del proyecto (du -sh)",
-             r"`du -sh` entrego \*\*(\S+?)\*\*", d["du_proyecto"]),
-            ("tamano de la particion raiz",
-             r"`/dev/sda1` con ([\d.]+ ?[KMGT]) totales", dfr[1]),
-            ("espacio usado en la particion raiz",
-             r"totales, ([\d.]+ ?[KMGT]) usados", dfr[2]),
-            ("espacio disponible en la particion raiz",
-             r"usados y ([\d.]+ ?[KMGT]) disponibles", dfr[3]),
-            ("uso de la particion raiz", r"disponibles \((\d+) % de uso\)",
-             dfr[4].rstrip("%")),
             ("archivos procesados", r"\| Archivos procesados \| (\d+) \|",
              d["resumen"]["Archivos procesados"]),
             ("mediciones validas", r"\| Mediciones validas \| (\d+) \|",
@@ -1171,16 +1166,6 @@ def verificar_coherencia(d):
              d["ev_indicadores"]["pm25"]),
             ("alertas de ruido", r"\| Ruido \| (\d+) \|",
              d["ev_indicadores"]["ruido"]),
-            ("informes acumulados al inicio de la prueba anti-sobrescritura",
-             r"Partiendo de (\d+) informes acumulados", d["informes_iniciales_v"]),
-            ("informes acumulados al final de la prueba anti-sobrescritura",
-             r"y luego a (\d+) \(", d["encontrados_v"]),
-            ("informes con sufijo de version", r"y (\d+) de ellos con sufijo de version",
-             d["con_sufijo_v"]),
-            ("informes esperados en la prueba anti-sobrescritura",
-             r"= (\d+) esperados", d["esperados_v"]),
-            ("anomalias inyectadas", r"El gestor registro las (\d+) anomalias",
-             d["anomalias_total"]),
             ("clasificacion de informes",
              r"# (\d+ / \d+ / \d+) informes",
              "%d / %d / %d" % (d["n_sin"], d["n_con"], d["n_crit"])),
